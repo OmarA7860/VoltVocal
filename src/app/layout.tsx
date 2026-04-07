@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
 import "./globals.css";
 
+/** Long-running Groq calls (transcribe + estimate) from Server Actions. */
+export const maxDuration = 120;
+
 export const metadata: Metadata = {
   title: "JobSite Estimate — Contractor dashboard",
   description:

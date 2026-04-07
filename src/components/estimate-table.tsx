@@ -2,6 +2,7 @@
 
 import { Download } from "lucide-react";
 import { downloadEstimatePdf } from "@/lib/estimate-pdf";
+import { sanitizePlainText } from "@/lib/sanitize-ai-text";
 import type { EstimateResult } from "@/types/estimate";
 
 const money = new Intl.NumberFormat("en-US", {
@@ -64,13 +65,13 @@ export function EstimateTable({ estimate, companyName }: Props) {
                   className="bg-white hover:bg-zinc-50/80 dark:bg-zinc-950 dark:hover:bg-zinc-900/40"
                 >
                   <td className="max-w-[280px] px-4 py-3 font-medium text-zinc-900 dark:text-zinc-100">
-                    {row.description}
+                    {sanitizePlainText(row.description)}
                   </td>
                   <td className="px-4 py-3 text-right tabular-nums text-zinc-800 dark:text-zinc-200">
                     {row.quantity}
                   </td>
                   <td className="px-4 py-3 text-zinc-700 dark:text-zinc-300">
-                    {row.unit}
+                    {sanitizePlainText(row.unit)}
                   </td>
                   <td className="px-4 py-3 text-right tabular-nums text-zinc-800 dark:text-zinc-200">
                     {money.format(row.unitPrice)}
@@ -79,7 +80,7 @@ export function EstimateTable({ estimate, companyName }: Props) {
                     {money.format(row.lineTotal)}
                   </td>
                   <td className="max-w-xs px-4 py-3 text-left text-xs leading-relaxed text-zinc-600 dark:text-zinc-400">
-                    {row.proRecommendation.trim() || "—"}
+                    {sanitizePlainText(row.proRecommendation).trim() || "—"}
                   </td>
                 </tr>
               ))
@@ -115,11 +116,11 @@ export function EstimateTable({ estimate, companyName }: Props) {
       </div>
 
       {notes.trim() ? (
-        <div className="border-t border-zinc-200 px-4 py-3 text-sm text-zinc-600 dark:border-zinc-800 dark:text-zinc-400">
+        <div className="whitespace-pre-wrap border-t border-zinc-200 px-4 py-3 text-sm text-zinc-600 dark:border-zinc-800 dark:text-zinc-400">
           <span className="font-medium text-zinc-800 dark:text-zinc-200">
             Notes:{" "}
           </span>
-          {notes}
+          {sanitizePlainText(notes, { preserveNewlines: true })}
         </div>
       ) : null}
     </div>

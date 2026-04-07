@@ -1,6 +1,10 @@
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
 import type { EstimateResult } from "@/types/estimate";
+import {
+  sanitizeCompanyNameForPdf,
+  sanitizeEstimateForPdfExport,
+} from "@/lib/sanitize-ai-text";
 
 const money = new Intl.NumberFormat("en-US", {
   style: "currency",
@@ -15,13 +19,13 @@ type DownloadOptions = {
 
 function resolveCompanyName(options?: DownloadOptions): string {
   if (options?.companyName?.trim()) {
-    return options.companyName.trim();
+    return sanitizeCompanyNameForPdf(options.companyName);
   }
   if (
     typeof process !== "undefined" &&
     process.env.NEXT_PUBLIC_COMPANY_NAME?.trim()
   ) {
-    return process.env.NEXT_PUBLIC_COMPANY_NAME.trim();
+    return sanitizeCompanyNameForPdf(process.env.NEXT_PUBLIC_COMPANY_NAME);
   }
   return "JobSite Estimate";
 }
@@ -30,6 +34,7 @@ export function downloadEstimatePdf(
   estimate: EstimateResult,
   options?: DownloadOptions,
 ): void {
+  const safeEstimate = sanitizeEstimateForPdfExport(estimate);
   const company = resolveCompanyName(options);
   const doc = new jsPDF({
     orientation: "landscape",
@@ -67,8 +72,8 @@ export function downloadEstimatePdf(
   y += 6;
 
   const body =
-    estimate.lineItems.length > 0
-      ? estimate.lineItems.map((row) => [
+    safeEstimate.lineItems.length > 0
+      ? safeEstimate.lineItems.map((row) => [
           row.description,
           String(row.quantity),
           row.unit,
@@ -107,7 +112,7 @@ export function downloadEstimatePdf(
         "",
         "",
         "Total estimate",
-        money.format(estimate.total),
+        money.format(safeEstimate.total),
         "",
       ],
     ],
@@ -166,7 +171,7 @@ export function downloadEstimatePdf(
   const docExt = doc as jsPDF & { lastAutoTable?: { finalY: number } };
   let finalY = docExt.lastAutoTable?.finalY ?? y + 40;
 
-  if (estimate.notes.trim()) {
+  if (safeEstimate.notes.trim()) {
     finalY += 8;
     if (finalY > pageHeight - 40) {
       doc.addPage();
@@ -175,7 +180,7 @@ export function downloadEstimatePdf(
     doc.setFont("helvetica", "normal");
     doc.setFontSize(8.5);
     doc.setTextColor(63, 63, 70);
-    const noteBlock = `Notes: ${estimate.notes.trim()}`;
+    const noteBlock = `Notes: ${safeEstimate.notes.trim()}`;
     const noteLines = doc.splitTextToSize(noteBlock, pageWidth - 2 * margin);
     doc.text(noteLines, margin, finalY);
   }

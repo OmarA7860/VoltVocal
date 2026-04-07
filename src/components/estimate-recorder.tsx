@@ -12,6 +12,7 @@ import {
   Mic,
   Square,
 } from "lucide-react";
+import { transcribeAudioAction, generateEstimateAction } from "@/app/actions/estimate-actions";
 import { EstimateTable } from "@/components/estimate-table";
 import type { EstimateResult } from "@/types/estimate";
 
@@ -42,40 +43,25 @@ function audioFileName(mime: string): string {
 
 async function postTranscribe(blob: Blob): Promise<string> {
   const name = audioFileName(blob.type);
-  const form = new FormData();
-  form.append("audio", blob, name);
-
-  const res = await fetch("/api/estimate", {
-    method: "POST",
-    body: form,
+  const file = new File([blob], name, {
+    type: blob.type || "audio/webm",
   });
-  const data = (await res.json()) as { transcript?: string; error?: string };
-  if (!res.ok) {
-    throw new Error(data.error ?? "Transcription failed.");
+  const form = new FormData();
+  form.append("audio", file);
+
+  const result = await transcribeAudioAction(form);
+  if (!result.ok) {
+    throw new Error(result.error);
   }
-  if (!data.transcript?.trim()) {
-    throw new Error("No transcript returned.");
-  }
-  return data.transcript.trim();
+  return result.transcript;
 }
 
 async function postEstimate(transcript: string): Promise<EstimateResult> {
-  const res = await fetch("/api/estimate", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ transcript }),
-  });
-  const data = (await res.json()) as {
-    estimate?: EstimateResult;
-    error?: string;
-  };
-  if (!res.ok) {
-    throw new Error(data.error ?? "Could not generate estimate.");
+  const result = await generateEstimateAction(transcript);
+  if (!result.ok) {
+    throw new Error(result.error);
   }
-  if (!data.estimate) {
-    throw new Error("Invalid response from server.");
-  }
-  return data.estimate;
+  return result.estimate;
 }
 
 export function EstimateRecorder() {
