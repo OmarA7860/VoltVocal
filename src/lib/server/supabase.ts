@@ -44,6 +44,11 @@ export function getSupabaseClient(): SupabaseClient {
 
   client = createClient<Database>(url, key, {
     auth: { persistSession: false },
+    global: {
+      headers: {
+        "x-application-name": "voltvocal",
+      },
+    },
   });
 
   return client;

@@ -1,6 +1,7 @@
 import "server-only";
 
 const DEFAULT_MAX_BYTES = 25 * 1024 * 1024;
+const MIN_FILE_SIZE_BYTES = 1000;
 
 /** MIME types browsers typically send for MediaRecorder / mic capture. */
 const ALLOWED_MIME_PREFIXES = [
@@ -25,6 +26,10 @@ function maxAudioBytes(): number {
 export function validateAudioFile(file: File): { ok: true } | { ok: false; error: string } {
   if (!(file instanceof File) || file.size === 0) {
     return { ok: false, error: "No audio file was uploaded." };
+  }
+
+  if (file.size < MIN_FILE_SIZE_BYTES) {
+    return { ok: false, error: "Audio file is too short. Please record a longer clip." };
   }
 
   const limit = maxAudioBytes();

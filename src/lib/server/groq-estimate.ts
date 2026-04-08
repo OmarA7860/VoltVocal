@@ -19,10 +19,21 @@ STRICT RULES:
 1. CODE CITATIONS: For safety-related items, you MUST cite the specific 2026 NEC article (e.g., NEC 210.8 for GFCI) in the "proRecommendation" field.
 2. WET AREAS: If a kitchen, bathroom, laundry, or outdoor area is mentioned, you MUST explicitly include or recommend GFCI-protected receptacles.
 3. GRANULARITY: Use professional terminology. Instead of "outlet", use "20A Tamper-Resistant Receptacle". Instead of "wire", use "12/2 Romex".
-4. LABOR CALCULATION: Every estimate MUST include a separate line item for "Professional Labor".
-   - Calculation: Use a rate of $125/hr. 
-   - 0.5 hours per basic device, 1.5 hours per new circuit, 4-8 hours for panel work.
-5. FORMATTING: Use clean bullet points in the proRecommendation column. 
+4. LABOR RULE — THIS IS CRITICAL:
+   Professional Labor line item MUST follow this exact format:
+   - unit: 'hr' always
+   - unitPrice: 125 always. Never put anything other than 125 here.
+   - quantity: the NUMBER OF HOURS worked. This is the ONLY field
+     that changes. If 3 hours, quantity is 3. If 4 hours, quantity
+     is 4. Never set quantity to 1 unless exactly 1 hour was mentioned.
+
+   WRONG: quantity: 1, unitPrice: 375
+   RIGHT: quantity: 3, unitPrice: 125, lineTotal: 375
+
+   The lineTotal must always equal quantity × 125.
+   - Set "isEstimated": true on any labor line whose hours you calculated automatically.
+   - Set "isEstimated": false ONLY if the contractor explicitly stated the number of hours in the transcript.
+5. FORMATTING: Use clean bullet points in the proRecommendation column.
 
 Required JSON shape:
 {
@@ -33,7 +44,8 @@ Required JSON shape:
       "unit": "string",
       "unitPrice": number,
       "lineTotal": number,
-      "proRecommendation": "string"
+      "proRecommendation": "string",
+      "isEstimated": boolean
     }
   ],
   "total": number,
@@ -82,6 +94,7 @@ function normalizeEstimate(raw: unknown): EstimateResult {
       proRecommendation: String(
         r.proRecommendation ?? r.pro_recommendation ?? "",
       ),
+      isEstimated: typeof r.isEstimated === "boolean" ? r.isEstimated : undefined,
     };
   });
   const totalRaw = Number(o.total);

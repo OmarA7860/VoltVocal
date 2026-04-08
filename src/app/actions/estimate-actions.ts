@@ -6,6 +6,8 @@ import { validateAudioFile } from "@/lib/audio-validation";
 import {
   LIMITS,
   sanitizePlainText,
+  sanitizeNumericInput,
+  sanitizeUserEditedText,
   truncateField,
 } from "@/lib/sanitize-ai-text";
 import {
@@ -123,18 +125,41 @@ export async function saveEstimateAction(
     const { getSupabaseClient } = await import("@/lib/server/supabase");
     const supabase = getSupabaseClient();
 
+    if (estimate.lineItems.length === 0) {
+      return { ok: false, error: "Estimate has no line items." };
+    }
+    if (estimate.lineItems.length > 50) {
+      return { ok: false, error: "Too many line items." };
+    }
+
     const cleanTranscript = truncateField(
       sanitizePlainText(transcript, { preserveNewlines: true }),
       LIMITS.transcript,
+    );
+
+    const validatedLineItems = estimate.lineItems.map((item) => ({
+      description: sanitizeUserEditedText(item.description, 300),
+      quantity: sanitizeNumericInput(item.quantity, 0.5, 9999, 1),
+      unit: sanitizeUserEditedText(item.unit, 50),
+      unitPrice: sanitizeNumericInput(item.unitPrice, 0, 99999, 0),
+      lineTotal: sanitizeNumericInput(item.lineTotal, 0, 9_999_999, 0),
+      proRecommendation: truncateField(sanitizePlainText(item.proRecommendation), 500),
+      isEstimated: Boolean(item.isEstimated),
+    }));
+
+    const validatedTotal = sanitizeNumericInput(estimate.total, 0, 9_999_999, 0);
+    const validatedNotes = truncateField(
+      sanitizePlainText(estimate.notes, { preserveNewlines: true }),
+      1000,
     );
 
     const { data, error } = await supabase
       .from("estimates")
       .insert({
         transcript: cleanTranscript,
-        total: estimate.total,
-        notes: estimate.notes,
-        line_items: estimate.lineItems,
+        total: validatedTotal,
+        notes: validatedNotes,
+        line_items: validatedLineItems,
       })
       .select("id")
       .single();

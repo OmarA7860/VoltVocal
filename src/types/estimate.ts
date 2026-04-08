@@ -6,6 +6,8 @@ export type EstimateLineItem = {
   lineTotal: number;
   /** Expert Mode: code- and safety-informed recommendation for this line. */
   proRecommendation: string;
+  /** True when labor hours were auto-calculated; false when contractor explicitly stated hours. */
+  isEstimated?: boolean;
 };
 
 export type EstimateResult = {
