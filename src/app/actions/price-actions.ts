@@ -8,6 +8,7 @@ import {
 } from "@/lib/sanitize-ai-text";
 import type { PriceItem } from "@/types/price";
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const VALID_CATEGORIES = ["general", "receptacles", "cable", "labor", "misc"] as const;
 type Category = (typeof VALID_CATEGORIES)[number];
 
@@ -121,7 +122,7 @@ export async function updatePriceItemAction(
   input: ItemInput,
 ): Promise<{ ok: true; item: PriceItem } | { ok: false; error: string }> {
   try {
-    if (!id || typeof id !== "string" || id.length > 100) {
+    if (!id || typeof id !== "string" || !UUID_RE.test(id)) {
       return { ok: false, error: "Invalid item ID." };
     }
 
@@ -154,7 +155,7 @@ export async function deletePriceItemAction(
   id: string,
 ): Promise<{ ok: true } | { ok: false; error: string }> {
   try {
-    if (!id || typeof id !== "string" || id.length > 100) {
+    if (!id || typeof id !== "string" || !UUID_RE.test(id)) {
       return { ok: false, error: "Invalid item ID." };
     }
 

@@ -9,10 +9,13 @@ const ACTION_LIMITS: Record<string, { max: number; windowMs: number }> = {
   est:     { max: 10, windowMs: 60_000 },
   save:    { max: 20, windowMs: 60_000 },
   del:     { max: 10, windowMs: 60_000 },
-  "pl-get":  { max: 30, windowMs: 60_000 },
-  "pl-save": { max: 20, windowMs: 60_000 },
-  "pl-upd":  { max: 20, windowMs: 60_000 },
-  "pl-del":  { max: 10, windowMs: 60_000 },
+  get:       { max: 30, windowMs: 60_000 },
+  "pl-get":   { max: 30, windowMs: 60_000 },
+  "pl-save":  { max: 20, windowMs: 60_000 },
+  "pl-upd":   { max: 20, windowMs: 60_000 },
+  "pl-del":   { max: 10, windowMs: 60_000 },
+  "cfg-get":  { max: 30, windowMs: 60_000 },
+  "cfg-save": { max: 10, windowMs: 60_000 },
 };
 
 const DEFAULT_LIMIT = { max: 10, windowMs: 60_000 };

@@ -185,12 +185,19 @@ export async function saveEstimateAction(
   }
 }
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 export async function deleteEstimateAction(
   id: string,
 ): Promise<{ ok: true } | { ok: false; error: string }> {
   try {
-    if (!id || typeof id !== "string" || id.length > 100) {
+    if (!id || typeof id !== "string" || !UUID_RE.test(id)) {
       return { ok: false, error: "Invalid estimate ID." };
+    }
+
+    const key = await rateLimitKey("del");
+    if (!checkRateLimit(key)) {
+      return { ok: false, error: "Too many requests. Please wait a few minutes." };
     }
 
     const { getSupabaseClient } = await import("@/lib/server/supabase");
@@ -212,6 +219,11 @@ export async function getEstimatesAction(): Promise<
   { ok: true; estimates: SavedEstimate[] } | { ok: false; error: string }
 > {
   try {
+    const key = await rateLimitKey("get");
+    if (!checkRateLimit(key)) {
+      return { ok: false, error: "Too many requests. Please wait a few minutes." };
+    }
+
     const { getSupabaseClient } = await import("@/lib/server/supabase");
     const supabase = getSupabaseClient();
 

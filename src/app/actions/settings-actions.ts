@@ -1,5 +1,9 @@
 "use server";
 
+import { headers } from "next/headers";
+import { checkRateLimit } from "@/lib/server/rate-limit";
+import { sanitizeUserEditedText } from "@/lib/sanitize-ai-text";
+
 export type ContractorProfile = {
   company_name: string;
   license_number: string;
@@ -7,14 +11,43 @@ export type ContractorProfile = {
   email: string;
 };
 
-function serializeError(e: unknown): string {
-  if (e instanceof Error) {
-    return JSON.stringify({ message: e.message, name: e.name, stack: e.stack });
-  }
-  try {
-    return JSON.stringify(e);
-  } catch {
-    return String(e);
+async function rateLimitKey(prefix: string): Promise<string> {
+  const h = await headers();
+  const xff = h.get("x-forwarded-for");
+  const ip =
+    xff?.split(",")[0]?.trim() ??
+    h.get("x-real-ip") ??
+    h.get("cf-connecting-ip") ??
+    "unknown";
+  return `${prefix}:${ip}`;
+}
+
+// Strips everything except digits, spaces, +, -, (, ), and dots.
+function sanitizePhone(raw: string): string {
+  return raw.replace(/[^\d\s+\-().]/g, "").trim().slice(0, 40);
+}
+
+// Validates a basic email shape and lowercases it.
+function sanitizeEmail(raw: string): string {
+  const s = sanitizeUserEditedText(raw, 120).toLowerCase();
+  // Must contain exactly one @ with at least one char on each side.
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s) ? s : "";
+}
+
+function sanitizeProfile(raw: ContractorProfile): ContractorProfile {
+  return {
+    company_name:   sanitizeUserEditedText(raw.company_name,   120),
+    license_number: sanitizeUserEditedText(raw.license_number,  60),
+    phone:          sanitizePhone(raw.phone ?? ""),
+    email:          sanitizeEmail(raw.email ?? ""),
+  };
+}
+
+function logError(label: string, e: unknown): void {
+  if (process.env.NODE_ENV === "development") {
+    console.error(label, e instanceof Error ? e.stack : e);
+  } else {
+    console.error(label, e instanceof Error ? e.message : "unknown error");
   }
 }
 
@@ -22,6 +55,11 @@ export async function getContractorProfileAction(): Promise<
   { ok: true; profile: ContractorProfile | null } | { ok: false; error: string }
 > {
   try {
+    const key = await rateLimitKey("cfg-get");
+    if (!checkRateLimit(key)) {
+      return { ok: false, error: "Too many requests. Please wait a few minutes." };
+    }
+
     const { getSupabaseClient } = await import("@/lib/server/supabase");
     const supabase = getSupabaseClient();
     const { data, error } = await supabase
@@ -32,7 +70,7 @@ export async function getContractorProfileAction(): Promise<
     if (error) throw error;
     return { ok: true, profile: data };
   } catch (e) {
-    console.error("[Profile action full error]:", serializeError(e));
+    logError("[getContractorProfileAction]", e);
     return { ok: false, error: "Could not load contractor profile." };
   }
 }
@@ -43,6 +81,17 @@ export async function saveContractorProfileAction(
   profile: ContractorProfile,
 ): Promise<{ ok: true } | { ok: false; error: string }> {
   try {
+    const key = await rateLimitKey("cfg-save");
+    if (!checkRateLimit(key)) {
+      return { ok: false, error: "Too many requests. Please wait a few minutes." };
+    }
+
+    if (!profile || typeof profile !== "object") {
+      return { ok: false, error: "Invalid profile data." };
+    }
+
+    const safe = sanitizeProfile(profile);
+
     const { getSupabaseClient } = await import("@/lib/server/supabase");
     const supabase = getSupabaseClient();
     const { error } = await supabase
@@ -50,17 +99,17 @@ export async function saveContractorProfileAction(
       .upsert(
         {
           id: PROFILE_ID,
-          company_name: profile.company_name,
-          license_number: profile.license_number,
-          phone: profile.phone,
-          email: profile.email,
+          company_name:   safe.company_name,
+          license_number: safe.license_number,
+          phone:          safe.phone,
+          email:          safe.email,
         },
         { onConflict: "id" },
       );
     if (error) throw error;
     return { ok: true };
   } catch (e) {
-    console.error("[Profile action full error]:", serializeError(e));
+    logError("[saveContractorProfileAction]", e);
     return { ok: false, error: "Could not save contractor profile." };
   }
 }

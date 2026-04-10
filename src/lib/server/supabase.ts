@@ -55,9 +55,6 @@ export function getSupabaseClient(): SupabaseClient {
   const url = process.env.SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-  console.log("[Supabase] URL present:", !!url);
-  console.log("[Supabase] Key present:", !!key);
-
   if (!url || !key) {
     console.error("[Supabase] Missing env vars:", { hasUrl: !!url, hasKey: !!key });
     throw new Error("CONFIG_MISSING");
