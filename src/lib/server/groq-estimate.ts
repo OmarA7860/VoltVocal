@@ -1,6 +1,7 @@
 import "server-only";
 
 import type { EstimateResult } from "@/types/estimate";
+import type { PriceItem } from "@/types/price";
 import {
   LIMITS,
   sanitizeEstimateResult,
@@ -11,48 +12,127 @@ import {
 const WHISPER_MODEL = "whisper-large-v3-turbo";
 const DEFAULT_CHAT_MODEL = "llama-3.3-70b-versatile";
 
-const ESTIMATOR_SYSTEM = `You are a Master Electrical Estimator with 30 years of experience and an expert in the 2026 National Electrical Code (NEC). 
+const ESTIMATOR_SYSTEM = `You are a transcription structuring tool for electrical contractors. Your only job is to convert a voice note into a clean structured estimate using ONLY what was explicitly stated. You do not add knowledge, guess prices, invent line items, or provide advice.
 
-Your goal is to turn voice transcripts into professional, code-compliant estimates specifically for the Ontario/Canadian market but using NEC 2026 as the safety gold standard.
+ABSOLUTE RULES — NEVER BREAK THESE:
 
-STRICT RULES:
-1. CODE CITATIONS: For safety-related items, you MUST cite the specific 2026 NEC article (e.g., NEC 210.8 for GFCI) in the "proRecommendation" field.
-2. WET AREAS: If a kitchen, bathroom, laundry, or outdoor area is mentioned, you MUST explicitly include or recommend GFCI-protected receptacles.
-3. GRANULARITY: Use professional terminology. Instead of "outlet", use "20A Tamper-Resistant Receptacle". Instead of "wire", use "12/2 Romex".
-4. LABOR RULE — THIS IS CRITICAL:
-   Professional Labor line item MUST follow this exact format:
-   - unit: 'hr' always
-   - unitPrice: 125 always. Never put anything other than 125 here.
-   - quantity: the NUMBER OF HOURS worked. This is the ONLY field
-     that changes. If 3 hours, quantity is 3. If 4 hours, quantity
-     is 4. Never set quantity to 1 unless exactly 1 hour was mentioned.
+PRICES:
+- If the contractor stated a price, use that exact number
+- If no price was stated, set unitPrice to 0
+- Never guess, estimate, or use market rates
+- Exception: labor unitPrice is always 125 if labor is mentioned without a price
 
-   WRONG: quantity: 1, unitPrice: 375
-   RIGHT: quantity: 3, unitPrice: 125, lineTotal: 375
+QUANTITIES:
+- If the contractor stated a quantity, use that exact number
+- If no quantity was stated, set quantity to 1
+- Never assume a quantity
 
-   The lineTotal must always equal quantity × 125.
-   - Set "isEstimated": true on any labor line whose hours you calculated automatically.
-   - Set "isEstimated": false ONLY if the contractor explicitly stated the number of hours in the transcript.
-5. FORMATTING: Use clean bullet points in the proRecommendation column.
+LINE ITEMS:
+- Only create line items for things explicitly mentioned
+- Never add anything that was not spoken
+- Never add permits, inspections, disposal fees, or extras
+- Never add labor unless the contractor mentioned it
 
-Required JSON shape:
+NAMES:
+- Use professional electrical trade names for items
+- "outlet" → "Electrical Receptacle"
+- "breaker" → "Circuit Breaker"
+- "panel" → "Electrical Panel"
+- "light" → "Light Fixture"
+- "switch" → "Light Switch"
+- "wire" → "Electrical Cable"
+- "pipe" → "Conduit"
+- For anything unclear use the exact word the contractor said
+- This is the ONLY thing you add beyond what was stated
+
+PRO RECOMMENDATION:
+Use only to flag missing information. Nothing else.
+Use exactly one of these or leave empty string:
+- "Price not specified — update before sending"
+- "Quantity not confirmed — verify before sending"
+- "Price and quantity not specified — update before sending"
+- "" (empty — if price AND quantity were both clearly stated)
+
+Never write code citations here.
+Never write compliance notes here.
+Never write installation advice here.
+Never write anything except the exact phrases above.
+
+LABOR RULES:
+- Only include labor if the contractor mentioned it
+- unitPrice is always exactly 125
+- quantity equals the number of hours stated
+- If hours not stated, quantity is 1 and proRecommendation is "Hours not confirmed — update before sending"
+
+MATH RULES:
+- lineTotal must equal quantity × unitPrice exactly
+- total must equal sum of all lineTotals exactly
+- Never round incorrectly
+
+NOTES FIELD:
+- Only include if the contractor said something that does not fit a line item
+- If nothing extra was said, use empty string ""
+- Never add advice, warnings, or code references here
+
+OUTPUT:
+- Valid JSON only
+- No markdown fences
+- No commentary before or after
+- No explanations
+
+Example input:
+"I need 3 outlets at 85 dollars each and 2 hours labor"
+
+Example output:
 {
   "lineItems": [
     {
-      "description": "string",
-      "quantity": number,
-      "unit": "string",
-      "unitPrice": number,
-      "lineTotal": number,
-      "proRecommendation": "string",
-      "isEstimated": boolean
+      "description": "Electrical Receptacle",
+      "quantity": 3,
+      "unit": "each",
+      "unitPrice": 85,
+      "lineTotal": 255,
+      "proRecommendation": ""
+    },
+    {
+      "description": "Professional Labor",
+      "quantity": 2,
+      "unit": "hr",
+      "unitPrice": 125,
+      "lineTotal": 250,
+      "proRecommendation": ""
     }
   ],
-  "total": number,
-  "notes": "string"
+  "total": 505,
+  "notes": ""
 }
 
-Respond with ONLY valid JSON. No markdown code fences, no commentary.`;
+Example input:
+"Need some outlets and a panel"
+
+Example output:
+{
+  "lineItems": [
+    {
+      "description": "Electrical Receptacle",
+      "quantity": 1,
+      "unit": "each",
+      "unitPrice": 0,
+      "lineTotal": 0,
+      "proRecommendation": "Price and quantity not specified — update before sending"
+    },
+    {
+      "description": "Electrical Panel",
+      "quantity": 1,
+      "unit": "each",
+      "unitPrice": 0,
+      "lineTotal": 0,
+      "proRecommendation": "Price and quantity not specified — update before sending"
+    }
+  ],
+  "total": 0,
+  "notes": ""
+}`;
 
 function groqKey(): string {
   const key = process.env.GROQ_API_KEY;
@@ -138,11 +218,21 @@ export async function transcribeWithGroq(file: File): Promise<string> {
   return truncateField(cleaned, LIMITS.transcript);
 }
 
-export async function estimateWithGroq(transcript: string): Promise<EstimateResult> {
+export async function estimateWithGroq(
+  transcript: string,
+  priceList: PriceItem[] = [],
+): Promise<EstimateResult> {
   const key = groqKey();
   const model = process.env.GROQ_MODEL ?? DEFAULT_CHAT_MODEL;
 
   const userContent = `Transcript from job-site voice note:\n"""${transcript}"""`;
+
+  const systemContent =
+    priceList.length > 0
+      ? `${ESTIMATOR_SYSTEM}\n\nCONTRACTOR PRICE LIST — USE THESE EXACT PRICES:\n${priceList
+          .map((item) => `${item.name}: $${item.unit_price} per ${item.unit}`)
+          .join("\n")}\nIf an item mentioned matches something in this list, use that exact price. Do not guess.`
+      : ESTIMATOR_SYSTEM;
 
   const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
     method: "POST",
@@ -153,7 +243,7 @@ export async function estimateWithGroq(transcript: string): Promise<EstimateResu
     body: JSON.stringify({
       model,
       messages: [
-        { role: "system", content: ESTIMATOR_SYSTEM },
+        { role: "system", content: systemContent },
         { role: "user", content: userContent },
       ],
       temperature: 0.2,

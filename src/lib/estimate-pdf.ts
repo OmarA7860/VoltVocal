@@ -15,6 +15,9 @@ const money = new Intl.NumberFormat("en-CA", {
 
 type DownloadOptions = {
   companyName?: string;
+  licenseNumber?: string;
+  phone?: string;
+  email?: string;
 };
 
 function resolveCompanyName(options?: DownloadOptions): string {
@@ -60,6 +63,39 @@ export function downloadEstimatePdf(
   doc.text(`Date: ${dateStr}`, margin, y);
   y += 8;
 
+  // Contractor info block — top right
+  {
+    const rightX = pageWidth - margin;
+    let infoY = margin;
+    const hasInfo =
+      options?.companyName || options?.licenseNumber || options?.phone || options?.email;
+    if (hasInfo) {
+      if (options?.companyName) {
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(10);
+        doc.setTextColor(23, 23, 23);
+        doc.text(sanitizeCompanyNameForPdf(options.companyName), rightX, infoY, {
+          align: "right",
+        });
+        infoY += 5.5;
+      }
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(8.5);
+      doc.setTextColor(82, 82, 91);
+      if (options?.licenseNumber) {
+        doc.text(`ECRA/ESA: ${options.licenseNumber}`, rightX, infoY, { align: "right" });
+        infoY += 5;
+      }
+      if (options?.phone) {
+        doc.text(options.phone, rightX, infoY, { align: "right" });
+        infoY += 5;
+      }
+      if (options?.email) {
+        doc.text(options.email, rightX, infoY, { align: "right" });
+      }
+    }
+  }
+
   doc.setDrawColor(228, 228, 231);
   doc.setLineWidth(0.3);
   doc.line(margin, y, pageWidth - margin, y);
@@ -92,6 +128,10 @@ export function downloadEstimatePdf(
           ],
         ];
 
+  const subtotal = safeEstimate.total;
+  const hst = Math.round(subtotal * 0.13 * 100) / 100;
+  const grandTotal = Math.round((subtotal + hst) * 100) / 100;
+
   autoTable(doc, {
     startY: y,
     margin: { left: margin, right: margin },
@@ -106,17 +146,6 @@ export function downloadEstimatePdf(
       ],
     ],
     body,
-    foot: [
-      [
-        "",
-        "",
-        "",
-        "Total estimate",
-        money.format(safeEstimate.total),
-        "",
-      ],
-    ],
-    showFoot: "lastPage",
     theme: "striped",
     headStyles: {
       fillColor: [5, 150, 105],
@@ -124,12 +153,6 @@ export function downloadEstimatePdf(
       fontStyle: "bold",
       fontSize: 8,
       valign: "middle",
-    },
-    footStyles: {
-      fillColor: [244, 244, 245],
-      textColor: [23, 23, 23],
-      fontStyle: "bold",
-      fontSize: 9,
     },
     bodyStyles: {
       fontSize: 8,
@@ -171,8 +194,54 @@ export function downloadEstimatePdf(
   const docExt = doc as jsPDF & { lastAutoTable?: { finalY: number } };
   let finalY = docExt.lastAutoTable?.finalY ?? y + 40;
 
+  // Subtotal / HST / Total footer block
+  finalY += 5;
+  if (finalY > pageHeight - 50) {
+    doc.addPage();
+    finalY = margin;
+  }
+  const rightX = pageWidth - margin;
+  const labelX = rightX - 44;
+
+  doc.setDrawColor(220, 220, 224);
+  doc.setLineWidth(0.25);
+  doc.line(labelX - 4, finalY, rightX, finalY);
+  finalY += 5;
+
+  // Subtotal
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(8.5);
+  doc.setTextColor(100, 116, 139);
+  doc.text("Subtotal", labelX, finalY);
+  doc.text(money.format(subtotal), rightX, finalY, { align: "right" });
+  finalY += 5.5;
+
+  // HST
+  doc.setTextColor(140, 155, 148);
+  doc.text("HST (13%)", labelX, finalY);
+  doc.text(money.format(hst), rightX, finalY, { align: "right" });
+  finalY += 4;
+
+  doc.setDrawColor(200, 200, 204);
+  doc.line(labelX - 4, finalY, rightX, finalY);
+  finalY += 5;
+
+  // Total — purple bold
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(11);
+  doc.setTextColor(124, 58, 237);
+  doc.text("Total", labelX, finalY);
+  doc.text(money.format(grandTotal), rightX, finalY, { align: "right" });
+  finalY += 5.5;
+
+  // CAD disclaimer
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(7.5);
+  doc.setTextColor(161, 161, 170);
+  doc.text("All prices in CAD. HST included.", labelX, finalY);
+  finalY += 8;
+
   if (safeEstimate.notes.trim()) {
-    finalY += 8;
     if (finalY > pageHeight - 40) {
       doc.addPage();
       finalY = margin;

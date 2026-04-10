@@ -1,13 +1,25 @@
 @import "tailwindcss";
 
 :root {
-  --background: #0E0E11;
-  --foreground: #E4E4F0;
+  --bg:        #090D0B;
+  --surface:   #0E1612;
+  --surface-2: #131E17;
+  --surface-3: #182519;
+  --border:    #1E3025;
+  --border-2:  #2A4234;
+  --g-primary: #3A8F5F;
+  --g-hover:   #2E7049;
+  --g-bright:  #4DB87B;
+  --g-glow:    rgba(58, 143, 95, 0.22);
+  --g-text:    #4DB87B;
+  --text:      #E0EDE5;
+  --text-2:    #8AA895;
+  --text-3:    #4A6857;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
+  --color-background: var(--bg);
+  --color-foreground: var(--text);
   --font-sans:
     ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji",
     "Segoe UI Symbol", "Noto Color Emoji";
@@ -16,8 +28,81 @@
     monospace;
 }
 
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
 body {
-  background: var(--background);
-  color: var(--foreground);
+  background: var(--bg);
+  color: var(--text);
   font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+::selection {
+  background: rgba(58, 143, 95, 0.35);
+  color: #E0EDE5;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border-2);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--g-primary);
+}
+
+@keyframes waveBar {
+  0%, 100% { transform: scaleY(0.35); }
+  50%       { transform: scaleY(1); }
+}
+
+@keyframes pulseRing {
+  0%   { transform: scale(1);    opacity: 0.5; }
+  100% { transform: scale(1.55); opacity: 0; }
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position:  200% 0; }
+}
+
+.animate-fade-up {
+  animation: fadeUp 0.3s ease both;
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.25s ease both;
+}
+
+.wave-bar {
+  border-radius: 2px;
+  animation: waveBar 0.7s ease-in-out infinite;
+  transform-origin: bottom;
+}
+
+.pulse-ring {
+  animation: pulseRing 1.4s ease-out infinite;
 }

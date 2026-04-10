@@ -5,10 +5,14 @@ type Bucket = { count: number; resetAt: number };
 const buckets = new Map<string, Bucket>();
 
 const ACTION_LIMITS: Record<string, { max: number; windowMs: number }> = {
-  tr:   { max: 10, windowMs: 60_000 },
-  est:  { max: 10, windowMs: 60_000 },
-  save: { max: 20, windowMs: 60_000 },
-  del:  { max: 10, windowMs: 60_000 },
+  tr:      { max: 10, windowMs: 60_000 },
+  est:     { max: 10, windowMs: 60_000 },
+  save:    { max: 20, windowMs: 60_000 },
+  del:     { max: 10, windowMs: 60_000 },
+  "pl-get":  { max: 30, windowMs: 60_000 },
+  "pl-save": { max: 20, windowMs: 60_000 },
+  "pl-upd":  { max: 20, windowMs: 60_000 },
+  "pl-del":  { max: 10, windowMs: 60_000 },
 };
 
 const DEFAULT_LIMIT = { max: 10, windowMs: 60_000 };

@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Check, Download, Pencil, Save, Trash2, X } from "lucide-react";
 import { downloadEstimatePdf } from "@/lib/estimate-pdf";
 import { saveEstimateAction } from "@/app/actions/estimate-actions";
+import { getContractorProfileAction } from "@/app/actions/settings-actions";
+import type { ContractorProfile } from "@/app/actions/settings-actions";
 import {
   sanitizePlainText,
   sanitizeNumericInput,
@@ -18,11 +20,11 @@ const money = new Intl.NumberFormat("en-CA", {
   maximumFractionDigits: 2,
 });
 
-const DESC_MAX = 300;
-const QTY_MIN = 0.5;
-const QTY_MAX = 9999;
-const PRICE_MIN = 0;
-const PRICE_MAX = 99999;
+const DESC_MAX   = 300;
+const QTY_MIN    = 0.5;
+const QTY_MAX    = 9999;
+const PRICE_MIN  = 0;
+const PRICE_MAX  = 99999;
 const LINE_TOTAL_MAX = 9_999_999;
 
 type Draft = { description: string; rawQty: string; rawPrice: string };
@@ -42,8 +44,17 @@ export function EstimateTable({ estimate, companyName, transcript, onDeleted }: 
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
+  const [contractorProfile, setContractorProfile] = useState<ContractorProfile | null>(null);
 
-  const grandTotal = lineItems.reduce((s, r) => s + r.lineTotal, 0);
+  useEffect(() => {
+    getContractorProfileAction().then((res) => {
+      if (res.ok && res.profile) setContractorProfile(res.profile);
+    }).catch(() => undefined);
+  }, []);
+
+  const subtotal = lineItems.reduce((s, r) => s + r.lineTotal, 0);
+  const hst = Math.round(subtotal * 0.13 * 100) / 100;
+  const grandTotal = Math.round((subtotal + hst) * 100) / 100;
   const hasEstimated = lineItems.some((r) => r.isEstimated === true);
 
   function startEdit(i: number) {
@@ -52,10 +63,7 @@ export function EstimateTable({ estimate, companyName, transcript, onDeleted }: 
     setDraft({ description: row.description, rawQty: String(row.quantity), rawPrice: String(row.unitPrice) });
   }
 
-  function cancelEdit() {
-    setEditingIndex(null);
-    setDraft(null);
-  }
+  function cancelEdit() { setEditingIndex(null); setDraft(null); }
 
   function parseQty(raw: string, fallback: number): number {
     const n = parseFloat(raw);
@@ -72,14 +80,14 @@ export function EstimateTable({ estimate, companyName, transcript, onDeleted }: 
   function commitEdit() {
     if (editingIndex === null || !draft) return;
     const origRow = lineItems[editingIndex];
-    const safeDesc = sanitizeUserEditedText(draft.description, DESC_MAX);
-    const safeQty = parseQty(draft.rawQty, origRow.quantity);
+    const safeDesc  = sanitizeUserEditedText(draft.description, DESC_MAX);
+    const safeQty   = parseQty(draft.rawQty, origRow.quantity);
     const safePrice = parsePrice(draft.rawPrice, origRow.unitPrice);
-    const safeLineTotal = sanitizeNumericInput(safeQty * safePrice, 0, LINE_TOTAL_MAX, 0);
+    const safeTotal = sanitizeNumericInput(safeQty * safePrice, 0, LINE_TOTAL_MAX, 0);
     setLineItems((prev) =>
       prev.map((row, i) =>
         i === editingIndex
-          ? { ...row, description: safeDesc || row.description, quantity: safeQty, unitPrice: safePrice, lineTotal: safeLineTotal }
+          ? { ...row, description: safeDesc || row.description, quantity: safeQty, unitPrice: safePrice, lineTotal: safeTotal }
           : row,
       ),
     );
@@ -88,168 +96,133 @@ export function EstimateTable({ estimate, companyName, transcript, onDeleted }: 
   }
 
   function confirmEstimate(index: number) {
-    setLineItems((prev) =>
-      prev.map((row, i) => (i === index ? { ...row, isEstimated: false } : row)),
-    );
+    setLineItems((prev) => prev.map((row, i) => (i === index ? { ...row, isEstimated: false } : row)));
   }
 
   async function handleSave() {
     if (!transcript) return;
     setIsSaving(true);
     setSaveError(null);
-    const currentEstimate: EstimateResult = { lineItems, total: grandTotal, notes };
+    const currentEstimate: EstimateResult = { lineItems, total: subtotal, notes };
     const result = await saveEstimateAction(transcript, currentEstimate);
     setIsSaving(false);
-    if (result.ok) {
-      setSaved(true);
-    } else {
-      setSaveError(result.error);
-    }
+    if (result.ok) setSaved(true);
+    else setSaveError(result.error);
   }
 
   const draftLineTotal = (() => {
     if (draft === null || editingIndex === null) return 0;
     const q = parseFloat(draft.rawQty);
     const p = parseFloat(draft.rawPrice);
-    if (Number.isFinite(q) && q > 0 && Number.isFinite(p) && p >= 0) {
+    if (Number.isFinite(q) && q > 0 && Number.isFinite(p) && p >= 0)
       return sanitizeNumericInput(q * p, 0, LINE_TOTAL_MAX, 0);
-    }
     return lineItems[editingIndex]?.lineTotal ?? 0;
   })();
 
+  const inputCls = "border border-[#1E3025] bg-[#090D0B] px-2 py-1.5 text-sm text-[#E0EDE5] rounded-lg outline-none transition-colors focus:border-[#3A8F5F] focus:ring-1 focus:ring-[#3A8F5F]/30";
+
   return (
-    <div className="w-full border border-[#22222A] bg-[#151518]">
-      {/* Panel header */}
-      <div className="flex items-center justify-between border-b border-[#22222A] bg-[#0E0E11] px-4 py-2">
-        <span className="text-[10px] font-bold tracking-[0.25em] text-[#8B8B99] uppercase font-mono">
+    <div className="w-full overflow-hidden rounded-2xl border border-[#1E3025] bg-[#0E1612] shadow-[0_8px_32px_rgba(0,0,0,0.4)]">
+      {/* Header bar */}
+      <div className="flex items-center justify-between border-b border-[#1E3025] bg-[#0B1210]/80 px-5 py-3">
+        <span className="text-[10px] font-bold tracking-[0.25em] text-[#4A6857] uppercase">
           Estimate Output
         </span>
-        <span className="text-[10px] font-mono tracking-widest text-[#7B3FE4] uppercase">
-          ● Ready
+        <span className="flex items-center gap-1.5 text-[10px] font-bold tracking-widest text-[#4DB87B] uppercase font-mono">
+          <span className="h-1.5 w-1.5 rounded-full bg-[#4DB87B]" />
+          Ready
         </span>
       </div>
 
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[900px] border-collapse text-left text-sm">
+        <table className="w-full min-w-[860px] border-collapse text-left text-sm">
           <thead>
-            <tr className="border-b border-[#22222A] bg-[#0E0E11] text-[10px] font-bold tracking-[0.2em] uppercase text-[#8B8B99] font-mono">
-              <th className="px-4 py-3">Description</th>
+            <tr className="border-b border-[#1E3025] bg-[#0B1210]/60 text-[10px] font-bold tracking-[0.2em] uppercase text-[#4A6857] font-mono">
+              <th className="px-5 py-3">Description</th>
               <th className="px-4 py-3 text-right">Qty</th>
               <th className="px-4 py-3">Unit</th>
               <th className="px-4 py-3 text-right">Unit Price</th>
-              <th className="px-4 py-3 text-right">Line Total</th>
-              <th className="min-w-[220px] px-4 py-3 normal-case tracking-normal">
+              <th className="px-4 py-3 text-right">Total</th>
+              <th className="min-w-[200px] px-4 py-3 normal-case tracking-normal font-sans font-medium text-[#4A6857]">
                 Recommendations
               </th>
-              <th className="w-8 px-2 py-3" aria-label="Actions" />
+              <th className="w-10 px-3 py-3" aria-label="Actions" />
             </tr>
           </thead>
-          <tbody className="divide-y divide-[#1C1C22]">
+          <tbody>
             {lineItems.length === 0 ? (
               <tr>
-                <td colSpan={7} className="px-4 py-8 text-center text-[#8B8B99] text-sm">
+                <td colSpan={7} className="px-5 py-10 text-center text-sm text-[#4A6857]">
                   No line items returned. Try adding more detail in your recording.
                 </td>
               </tr>
             ) : (
               lineItems.map((row, i) => {
                 const isEditing = editingIndex === i;
-                const base = i % 2 === 0 ? "bg-[#151518]" : "bg-[#0E0E11]";
+                const isEven = i % 2 === 0;
 
                 if (isEditing && draft !== null) {
                   const descLen = draft.description.length;
                   const nearLimit = descLen > 250;
                   return (
-                    <tr key={`${row.description}-${i}`} className={`${base} ring-1 ring-inset ring-[#7B3FE4]`}>
-                      {/* description */}
-                      <td className="px-4 py-2">
+                    <tr key={`${row.description}-${i}`} className="bg-[#3A8F5F]/8 ring-1 ring-inset ring-[#3A8F5F]/40">
+                      <td className="px-5 py-2.5">
                         <div className="flex flex-col gap-0.5">
                           <input
                             type="text"
                             value={draft.description}
                             maxLength={DESC_MAX}
+                            autoFocus
                             onChange={(e) => {
-                              const raw = e.target.value;
-                              // Strip HTML tags and dangerous patterns on the fly
-                              const safe = raw
+                              const safe = e.target.value
                                 .replace(/<[^>]+>/g, "")
                                 .replace(/javascript\s*:/gi, "")
                                 .replace(/on\w+\s*=/gi, "")
                                 .slice(0, DESC_MAX);
                               setDraft((d) => d && { ...d, description: safe });
                             }}
-                            onBlur={(e) =>
-                              setDraft((d) => d && { ...d, description: sanitizeUserEditedText(e.target.value, DESC_MAX) })
-                            }
-                            className="w-full border border-[#3A3A44] bg-[#0E0E11] px-2 py-1 text-sm text-[#E4E4F0] font-medium outline-none focus:border-[#7B3FE4]"
+                            onBlur={(e) => setDraft((d) => d && { ...d, description: sanitizeUserEditedText(e.target.value, DESC_MAX) })}
+                            className={`w-full ${inputCls}`}
                           />
                           {nearLimit && (
-                            <span className="text-[9px] font-mono text-amber-400">
-                              {descLen}/{DESC_MAX}
-                            </span>
+                            <span className="text-[9px] font-mono text-amber-400">{descLen}/{DESC_MAX}</span>
                           )}
                         </div>
                       </td>
-                      {/* quantity */}
-                      <td className="px-4 py-2">
+                      <td className="px-4 py-2.5">
                         <input
-                          type="text"
-                          inputMode="decimal"
-                          value={draft.rawQty}
+                          type="text" inputMode="decimal" value={draft.rawQty}
                           onChange={(e) => setDraft((d) => d && { ...d, rawQty: e.target.value })}
-                          onBlur={(e) => {
-                            const safe = parseQty(e.target.value, lineItems[editingIndex].quantity);
-                            setDraft((d) => d && { ...d, rawQty: String(safe) });
-                          }}
+                          onBlur={(e) => { const safe = parseQty(e.target.value, lineItems[editingIndex].quantity); setDraft((d) => d && { ...d, rawQty: String(safe) }); }}
                           onFocus={(e) => e.target.select()}
-                          className="w-20 border border-[#3A3A44] bg-[#0E0E11] px-2 py-1 text-right text-sm font-mono text-[#E4E4F0] outline-none focus:border-[#7B3FE4]"
+                          className={`w-20 text-right ${inputCls}`}
                         />
                       </td>
-                      {/* unit — static */}
-                      <td className="px-4 py-2 text-[#B0B0BE]">
-                        {sanitizePlainText(row.unit)}
-                      </td>
-                      {/* unitPrice */}
-                      <td className="px-4 py-2">
+                      <td className="px-4 py-2.5 text-[#8AA895]">{sanitizePlainText(row.unit)}</td>
+                      <td className="px-4 py-2.5">
                         <input
-                          type="text"
-                          inputMode="decimal"
-                          value={draft.rawPrice}
+                          type="text" inputMode="decimal" value={draft.rawPrice}
                           onChange={(e) => setDraft((d) => d && { ...d, rawPrice: e.target.value })}
-                          onBlur={(e) => {
-                            const safe = parsePrice(e.target.value, lineItems[editingIndex].unitPrice);
-                            setDraft((d) => d && { ...d, rawPrice: String(safe) });
-                          }}
+                          onBlur={(e) => { const safe = parsePrice(e.target.value, lineItems[editingIndex].unitPrice); setDraft((d) => d && { ...d, rawPrice: String(safe) }); }}
                           onFocus={(e) => e.target.select()}
-                          className="w-28 border border-[#3A3A44] bg-[#0E0E11] px-2 py-1 text-right text-sm font-mono text-[#E4E4F0] outline-none focus:border-[#7B3FE4]"
+                          className={`w-28 text-right ${inputCls}`}
                         />
                       </td>
-                      {/* live lineTotal */}
-                      <td className="px-4 py-2 text-right font-bold tabular-nums font-mono text-[#7B3FE4]">
+                      <td className="px-4 py-2.5 text-right font-bold tabular-nums font-mono text-[#4DB87B]">
                         {money.format(draftLineTotal)}
                       </td>
-                      {/* recommendation — static */}
-                      <td className="max-w-xs px-4 py-2 text-left text-xs leading-relaxed text-[#8B8B99]">
+                      <td className="max-w-xs px-4 py-2.5 text-xs leading-relaxed text-[#4A6857]">
                         {sanitizePlainText(row.proRecommendation).trim() || "—"}
                       </td>
-                      {/* confirm / cancel */}
-                      <td className="px-2 py-2">
+                      <td className="px-3 py-2.5">
                         <div className="flex items-center gap-1">
-                          <button
-                            type="button"
-                            onClick={commitEdit}
-                            title="Confirm edit"
-                            className="inline-flex items-center justify-center border border-[#7B3FE4] bg-[#7B3FE4] p-1 text-white transition hover:bg-[#6930cc] focus:outline-none focus-visible:ring-1 focus-visible:ring-[#7B3FE4]"
-                          >
-                            <Check className="size-3" aria-hidden />
+                          <button type="button" onClick={commitEdit} title="Confirm"
+                            className="inline-flex items-center justify-center rounded-md bg-[#3A8F5F] p-1.5 text-white transition-all hover:bg-[#2E7049] focus:outline-none">
+                            <Check className="h-3 w-3" />
                           </button>
-                          <button
-                            type="button"
-                            onClick={cancelEdit}
-                            title="Cancel edit"
-                            className="inline-flex items-center justify-center border border-[#3A3A44] bg-transparent p-1 text-[#8B8B99] transition hover:border-[#8B8B99] hover:text-[#E4E4F0] focus:outline-none focus-visible:ring-1 focus-visible:ring-[#8B8B99]"
-                          >
-                            <X className="size-3" aria-hidden />
+                          <button type="button" onClick={cancelEdit} title="Cancel"
+                            className="inline-flex items-center justify-center rounded-md border border-[#2A4234] p-1.5 text-[#8AA895] transition-all hover:border-[#4A6857] hover:text-[#E0EDE5] focus:outline-none">
+                            <X className="h-3 w-3" />
                           </button>
                         </div>
                       </td>
@@ -258,58 +231,44 @@ export function EstimateTable({ estimate, companyName, transcript, onDeleted }: 
                 }
 
                 return (
-                  <tr key={`${row.description}-${i}`} className={`group ${base}`}>
-                    {/* description */}
-                    <td className="max-w-[280px] px-4 py-3 font-medium text-[#E4E4F0]">
+                  <tr key={`${row.description}-${i}`}
+                    className={`group border-b border-[#1A2820] transition-colors hover:bg-[#131E17] ${isEven ? "bg-[#0E1612]" : "bg-[#0B1210]/50"}`}>
+                    <td className="max-w-[260px] px-5 py-3.5 font-medium text-[#E0EDE5]">
                       {sanitizePlainText(row.description)}
                     </td>
-                    {/* quantity + estimated badge */}
-                    <td className="px-4 py-3 text-right tabular-nums font-mono text-[#E4E4F0]">
+                    <td className="px-4 py-3.5 text-right tabular-nums font-mono text-[#E0EDE5]">
                       <div className="flex items-center justify-end gap-2">
                         {row.isEstimated === true && (
                           <>
-                            <span className="inline-flex items-center border border-amber-600 bg-amber-950 px-1.5 py-0.5 text-[9px] font-bold tracking-widest text-amber-400 uppercase font-mono">
-                              Estimated
+                            <span className="inline-flex items-center rounded border border-amber-700/60 bg-amber-950/40 px-1.5 py-0.5 text-[9px] font-bold tracking-widest text-amber-400 uppercase font-mono">
+                              Est.
                             </span>
-                            <button
-                              type="button"
-                              onClick={() => confirmEstimate(i)}
-                              title="Confirm this labor estimate"
-                              className="inline-flex items-center justify-center border border-amber-700 bg-amber-950 p-0.5 text-amber-400 transition hover:bg-amber-900 focus:outline-none focus-visible:ring-1 focus-visible:ring-amber-500"
-                            >
-                              <Check className="size-3" aria-hidden />
+                            <button type="button" onClick={() => confirmEstimate(i)} title="Confirm"
+                              className="inline-flex items-center justify-center rounded border border-amber-700/50 bg-amber-950/40 p-0.5 text-amber-400 transition hover:bg-amber-900/50">
+                              <Check className="h-3 w-3" />
                             </button>
                           </>
                         )}
                         {row.quantity}
                       </div>
                     </td>
-                    {/* unit */}
-                    <td className="px-4 py-3 text-[#B0B0BE]">
-                      {sanitizePlainText(row.unit)}
-                    </td>
-                    {/* unitPrice */}
-                    <td className="px-4 py-3 text-right tabular-nums font-mono text-[#E4E4F0]">
+                    <td className="px-4 py-3.5 text-[#8AA895]">{sanitizePlainText(row.unit)}</td>
+                    <td className="px-4 py-3.5 text-right tabular-nums font-mono text-[#E0EDE5]">
                       {money.format(row.unitPrice)}
                     </td>
-                    {/* lineTotal */}
-                    <td className="px-4 py-3 text-right font-bold tabular-nums font-mono text-[#E4E4F0]">
+                    <td className="px-4 py-3.5 text-right font-bold tabular-nums font-mono text-[#E0EDE5]">
                       {money.format(row.lineTotal)}
                     </td>
-                    {/* recommendation */}
-                    <td className="max-w-xs px-4 py-3 text-left text-xs leading-relaxed text-[#8B8B99]">
-                      {sanitizePlainText(row.proRecommendation).trim() || "—"}
+                    <td className="max-w-xs px-4 py-3.5 text-xs leading-relaxed text-[#4A6857]">
+                      {sanitizePlainText(row.proRecommendation).trim() || (
+                        <span className="text-[#2A4234]">—</span>
+                      )}
                     </td>
-                    {/* hover edit icon */}
-                    <td className="px-2 py-3">
-                      <button
-                        type="button"
-                        onClick={() => startEdit(i)}
-                        title="Edit row"
+                    <td className="px-3 py-3.5">
+                      <button type="button" onClick={() => startEdit(i)} title="Edit row"
                         disabled={editingIndex !== null}
-                        className="inline-flex items-center justify-center p-1 text-[#8B8B99] opacity-0 transition group-hover:opacity-100 hover:text-[#7B3FE4] focus:outline-none focus-visible:opacity-100 focus-visible:ring-1 focus-visible:ring-[#7B3FE4] disabled:pointer-events-none"
-                      >
-                        <Pencil style={{ width: 14, height: 14 }} aria-hidden />
+                        className="inline-flex items-center justify-center rounded-md p-1.5 text-[#4A6857] opacity-0 transition-all group-hover:opacity-100 hover:bg-[#1E3025] hover:text-[#4DB87B] focus:outline-none focus-visible:opacity-100 disabled:pointer-events-none">
+                        <Pencil className="h-3.5 w-3.5" />
                       </button>
                     </td>
                   </tr>
@@ -318,61 +277,72 @@ export function EstimateTable({ estimate, companyName, transcript, onDeleted }: 
             )}
           </tbody>
           <tfoot>
-            <tr className="border-t-2 border-[#7B3FE4] bg-[#0E0E11]">
-              <td colSpan={7} className="px-4 py-4">
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end sm:gap-4">
-                  <span className="text-xs font-bold tracking-[0.2em] text-[#8B8B99] uppercase font-mono sm:mr-auto">
-                    Total Estimate
-                  </span>
-                  <div className="flex flex-wrap items-center gap-3">
-                    <span className="text-xl font-bold tabular-nums font-mono text-[#7B3FE4]">
-                      {money.format(grandTotal)}
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => downloadEstimatePdf({ lineItems, total: grandTotal, notes }, { companyName })}
-                      className="inline-flex items-center gap-2 border border-[#22222A] bg-[#151518] px-3 py-2 text-xs font-bold tracking-[0.1em] text-[#E4E4F0] uppercase transition hover:border-[#7B3FE4] hover:text-[#7B3FE4] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#7B3FE4] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0E0E11]"
-                    >
-                      <Download className="size-3.5 shrink-0" aria-hidden />
-                      Export PDF
-                    </button>
-                    {transcript && !saved && (
-                      <button
-                        type="button"
-                        onClick={() => void handleSave()}
-                        disabled={isSaving}
-                        className="inline-flex items-center gap-2 border border-[#7B3FE4] bg-[#7B3FE4] px-3 py-2 text-xs font-bold tracking-[0.1em] text-white uppercase transition hover:bg-[#6930cc] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#7B3FE4] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0E0E11] disabled:opacity-50"
-                      >
-                        <Save className="size-3.5 shrink-0" aria-hidden />
-                        {isSaving ? "Saving…" : "Save"}
-                      </button>
-                    )}
-                    {transcript && saved && (
-                      <span className="text-xs font-bold tracking-[0.1em] text-[#7B3FE4] uppercase font-mono">
-                        ✓ Saved
-                      </span>
-                    )}
-                    {onDeleted && (
-                      <button
-                        type="button"
-                        onClick={onDeleted}
-                        className="inline-flex items-center gap-2 border border-red-800 bg-[#151518] px-3 py-2 text-xs font-bold tracking-[0.1em] text-red-400 uppercase transition hover:bg-red-950 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0E0E11]"
-                      >
-                        <Trash2 className="size-3.5 shrink-0" aria-hidden />
-                        Delete
-                      </button>
-                    )}
+            <tr className="border-t-2 border-[#3A8F5F]/40 bg-[#0B1210]/80">
+              <td colSpan={7} className="px-5 py-4">
+                {/* Subtotal / HST / Total breakdown */}
+                <div className="flex flex-col items-end gap-1 mb-4">
+                  <div className="flex items-center gap-8">
+                    <span className="text-[11px] font-mono tracking-wider text-[#4A6857] uppercase w-24 text-right">Subtotal</span>
+                    <span className="text-sm tabular-nums font-mono text-[#8AA895] w-28 text-right">{money.format(subtotal)}</span>
+                  </div>
+                  <div className="flex items-center gap-8">
+                    <span className="text-[11px] font-mono tracking-wider text-[#2A4234] uppercase w-24 text-right">HST (13%)</span>
+                    <span className="text-sm tabular-nums font-mono text-[#4A6857] w-28 text-right">{money.format(hst)}</span>
+                  </div>
+                  <div className="flex items-center gap-8 border-t border-[#1E3025] pt-2 mt-1">
+                    <span className="text-[11px] font-bold font-mono tracking-wider text-[#8AA895] uppercase w-24 text-right">Total</span>
+                    <span className="text-2xl font-bold tabular-nums font-mono text-[#A78BFA] w-28 text-right">{money.format(grandTotal)}</span>
                   </div>
                 </div>
+
+                {/* Action buttons */}
+                <div className="flex flex-wrap items-center justify-end gap-2.5">
+                  <button type="button"
+                    onClick={() => downloadEstimatePdf(
+                      { lineItems, total: subtotal, notes },
+                      {
+                        companyName: contractorProfile?.company_name ?? companyName,
+                        licenseNumber: contractorProfile?.license_number,
+                        phone: contractorProfile?.phone,
+                        email: contractorProfile?.email,
+                      },
+                    )}
+                    className="inline-flex items-center gap-2 rounded-lg border border-[#2A4234] bg-[#131E17] px-3.5 py-2 text-xs font-semibold tracking-wide text-[#8AA895] transition-all hover:border-[#3A8F5F] hover:text-[#4DB87B] focus:outline-none active:scale-95">
+                    <Download className="h-3.5 w-3.5 shrink-0" />
+                    Export PDF
+                  </button>
+
+                  {transcript && !saved && (
+                    <button type="button" onClick={() => void handleSave()} disabled={isSaving}
+                      className="inline-flex items-center gap-2 rounded-lg bg-[#3A8F5F] px-3.5 py-2 text-xs font-semibold tracking-wide text-white transition-all hover:bg-[#2E7049] active:scale-95 focus:outline-none disabled:opacity-50">
+                      <Save className="h-3.5 w-3.5 shrink-0" />
+                      {isSaving ? "Saving…" : "Save Estimate"}
+                    </button>
+                  )}
+
+                  {transcript && saved && (
+                    <span className="flex items-center gap-1.5 text-xs font-semibold tracking-wide text-[#4DB87B] font-mono">
+                      <Check className="h-3.5 w-3.5" />
+                      Saved
+                    </span>
+                  )}
+
+                  {onDeleted && (
+                    <button type="button" onClick={onDeleted}
+                      className="inline-flex items-center gap-2 rounded-lg border border-red-900/50 bg-red-950/20 px-3.5 py-2 text-xs font-semibold tracking-wide text-red-400 transition-all hover:bg-red-950/40 hover:border-red-700/60 active:scale-95 focus:outline-none">
+                      <Trash2 className="h-3.5 w-3.5 shrink-0" />
+                      Delete
+                    </button>
+                  )}
+                </div>
+
                 {transcript && !saved && hasEstimated && (
-                  <p className="mt-2 text-right text-xs text-amber-400 font-mono">
-                    ⚠ Review estimated items before saving
+                  <p className="mt-2 text-right text-xs text-amber-400/80 font-mono">
+                    ⚠ Review estimated labor hours before saving
                   </p>
                 )}
                 {saveError && (
-                  <p className="mt-2 text-right text-xs text-red-400 font-mono">
-                    {saveError}
-                  </p>
+                  <p className="mt-2 text-right text-xs text-red-400 font-mono">{saveError}</p>
                 )}
               </td>
             </tr>
@@ -381,8 +351,8 @@ export function EstimateTable({ estimate, companyName, transcript, onDeleted }: 
       </div>
 
       {notes.trim() ? (
-        <div className="whitespace-pre-wrap border-t border-[#22222A] bg-[#0E0E11] px-4 py-3 text-sm text-[#8B8B99]">
-          <span className="text-[10px] font-bold tracking-[0.2em] text-[#8B8B99] uppercase font-mono">
+        <div className="border-t border-[#1E3025] bg-[#0B1210]/60 px-5 py-4 text-sm text-[#8AA895] whitespace-pre-wrap leading-relaxed">
+          <span className="text-[10px] font-bold tracking-[0.2em] text-[#4A6857] uppercase font-mono">
             Notes —{" "}
           </span>
           {sanitizePlainText(notes, { preserveNewlines: true })}

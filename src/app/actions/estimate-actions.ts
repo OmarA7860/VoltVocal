@@ -105,7 +105,21 @@ export async function generateEstimateAction(
       return { ok: false, error: "Transcript is empty." };
     }
 
-    const estimate = await estimateWithGroq(trimmed);
+    // Fetch price list for context injection — best-effort, never blocks the estimate
+    let priceList: import("@/types/price").PriceItem[] = [];
+    try {
+      const { getSupabaseClient } = await import("@/lib/server/supabase");
+      const supabase = getSupabaseClient();
+      const { data } = await supabase
+        .from("price_list")
+        .select("id, created_at, name, unit, unit_price, category")
+        .order("name");
+      if (data) priceList = data;
+    } catch {
+      // price list unavailable — proceed without it
+    }
+
+    const estimate = await estimateWithGroq(trimmed, priceList);
     return { ok: true, estimate };
   } catch (e) {
     return { ok: false, error: mapError(e) };

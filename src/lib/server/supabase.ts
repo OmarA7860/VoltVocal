@@ -1,6 +1,7 @@
 import "server-only";
 import { createClient } from "@supabase/supabase-js";
 import type { EstimateLineItem } from "@/types/estimate";
+import type { PriceItem } from "@/types/price";
 
 type EstimateRow = {
   id: string;
@@ -11,6 +12,14 @@ type EstimateRow = {
   line_items: EstimateLineItem[];
 };
 
+type ContractorProfileRow = {
+  id: number;
+  company_name: string;
+  license_number: string;
+  phone: string;
+  email: string;
+};
+
 type Database = {
   public: {
     Tables: {
@@ -18,6 +27,18 @@ type Database = {
         Row: EstimateRow;
         Insert: Omit<EstimateRow, "id" | "created_at">;
         Update: Partial<Omit<EstimateRow, "id" | "created_at">>;
+        Relationships: [];
+      };
+      price_list: {
+        Row: PriceItem;
+        Insert: Omit<PriceItem, "id" | "created_at">;
+        Update: Partial<Omit<PriceItem, "id" | "created_at">>;
+        Relationships: [];
+      };
+      contractor_profile: {
+        Row: ContractorProfileRow;
+        Insert: ContractorProfileRow;
+        Update: Partial<Omit<ContractorProfileRow, "id">>;
         Relationships: [];
       };
     };
