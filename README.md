@@ -1,386 +1,150 @@
- VoltVocal:
-                                                                                                                                        A field estimating SaaS for electrical contractors. Walk a job site, speak your observations, and get a structured, exportable      
-  estimate in seconds — powered by AI.                                                                                                   
-  **Workflow:** Record → Transcribe → Estimate → Export PDF                                                                           
-  
-  ---
-
-  ## Features
-
-  - **Voice recording** — capture job site observations hands-free via browser microphone
-  - **AI transcription** — Groq Whisper converts audio to text accurately
-  - **Smart estimation** — Llama 3.3-70b extracts line items, quantities, unit prices, and totals from natural speech
-  - **Inline editing** — adjust any line item before saving
-  - **Price list** — maintain a custom catalog of your common materials and labor rates
-  - **PDF export** — generate a professional estimate PDF with your company name
-  - **Saved estimates** — persist and retrieve past estimates via Supabase
-  - **PWA** — installable as a mobile app, works offline
-
-  ---
-
-  ## Tech Stack
-
-  | Layer | Technology |
-  |-------|------------|
-  | Framework | Next.js 16 (App Router, Server Actions) |
-  | Language | TypeScript |
-  | Styling | Tailwind CSS 4 |
-  | AI — Transcription | Groq Whisper |
-  | AI — Estimation | Groq `llama-3.3-70b-versatile` |
-  | Database | Supabase (PostgreSQL) |
-  | PDF | jsPDF + jspdf-autotable |
-  | PWA | next-pwa |
-
-  ---
-
-  ## Prerequisites
-
-  - Node.js 18+
-  - A [Groq](https://console.groq.com) account (free tier available)
-  - A [Supabase](https://supabase.com) project
-
-  ---
-
-  ## Setup
-
-  ### 1. Install dependencies
-
-  bash
-  npm install
-
-  2. Configure environment variables
-
-  Copy .env.example to .env.local and fill in your values:
-
-  cp .env.example .env.local
-
-  # Required
-  GROQ_API_KEY=your_groq_api_key
-
-  SUPABASE_URL=https://your-project.supabase.co
-  SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
-
-  # Optional
-  GROQ_MODEL=llama-3.3-70b-versatile        # default
-  MAX_AUDIO_BYTES=26214400                   # default 25 MB, max 50 MB
-  NEXT_PUBLIC_COMPANY_NAME=Your Company Name # appears on exported PDFs
-
-  ▎ Note: SUPABASE_SERVICE_ROLE_KEY is a privileged key — it is server-only and never exposed to the client.
-
-  3. Set up Supabase tables
-
-  In your Supabase project, create the following tables:
-
-  estimates
-
-  ┌────────────┬─────────────┬────────────────────────────────────────┐
-  │   Column   │    Type     │                 Notes                  │
-  ├────────────┼─────────────┼────────────────────────────────────────┤
-  │ id         │ uuid        │ primary key, default gen_random_uuid() │
-  ├────────────┼─────────────┼────────────────────────────────────────┤
-  │ created_at │ timestamptz │ default now()                          │
-  ├────────────┼─────────────┼────────────────────────────────────────┤
-  │ total      │ numeric     │                                        │
-  ├────────────┼─────────────┼────────────────────────────────────────┤
-  │ notes      │ text        │                                        │
-  ├────────────┼─────────────┼────────────────────────────────────────┤
-  │ transcript │ text        │                                        │
-  ├────────────┼─────────────┼────────────────────────────────────────┤
-  │ line_items │ jsonb       │                                        │
-  └────────────┴─────────────┴────────────────────────────────────────┘
-
-  price_list
-
-  ┌────────────┬─────────────┬────────────────────────────────────────┐
-  │   Column   │    Type     │                 Notes                  │
-  ├────────────┼─────────────┼────────────────────────────────────────┤
-  │ id         │ uuid        │ primary key, default gen_random_uuid() │
-  ├────────────┼─────────────┼────────────────────────────────────────┤
-  │ created_at │ timestamptz │ default now()                          │
-  ├────────────┼─────────────┼────────────────────────────────────────┤
-  │ name       │ text        │                                        │
-  ├────────────┼─────────────┼────────────────────────────────────────┤
-  │ unit       │ text        │                                        │
-  ├────────────┼─────────────┼────────────────────────────────────────┤
-  │ unit_price │ numeric     │                                        │
-  └────────────┴─────────────┴────────────────────────────────────────┘
-
-  contractor_profile
-
-  ┌────────────────┬──────┬─────────────┐
-  │     Column     │ Type │    Notes    │
-  ├────────────────┼──────┼─────────────┤
-  │ id             │ uuid │ primary key │
-  ├────────────────┼──────┼─────────────┤
-  │ company_name   │ text │             │
-  ├────────────────┼──────┼─────────────┤
-  │ license_number │ text │             │
-  ├────────────────┼──────┼─────────────┤
-  │ phone          │ text │             │
-  ├────────────────┼──────┼─────────────┤
-  │ email          │ text │             │
-  └────────────────┴──────┴─────────────┘
-
-  4. Run the development server
-
-  npm run dev
-
-  Open http://localhost:3000 in your browser.
-
-  ---
-  Usage
-
-  1. Record — tap the microphone button and describe the job (e.g., "3 duplex outlets at $85 each, 2 hours labor at $95 an hour, one  
-  panel upgrade $450")
-  2. Review — the AI parses your speech into a line-item table with quantities, unit prices, and a total
-  3. Edit — adjust any field inline if needed
-  4. Save or Export — save the estimate to your history or download a PDF
-
-  ---
-  Project Structure
-
-  src/
-  ├── app/
-  │   ├── dashboard/
-  │   │   ├── page.tsx          # Main estimator UI
-  │   │   ├── prices/page.tsx   # Price list management
-  │   │   └── settings/page.tsx # Contractor profile & settings
-  │   └── actions/
-  │       ├── estimate-actions.ts  # Transcribe, generate, save, delete
-  │       ├── price-actions.ts     # CRUD for price list
-  │       └── settings-actions.ts  # Contractor profile
-  ├── components/
-  │   ├── estimate-recorder.tsx    # Recording UI + waveform
-  │   ├── estimate-table.tsx       # Editable line-item table
-  │   ├── saved-estimates.tsx      # Estimate history
-  │   └── install-prompt.tsx       # PWA install prompt
-  ├── lib/
-  │   ├── audio-validation.ts      # File size + MIME validation
-  │   ├── estimate-pdf.ts          # PDF generation
-  │   ├── sanitize-ai-text.ts      # Input/output sanitization
-  │   └── server/
-  │       ├── groq-estimate.ts     # Groq API (Whisper + Llama)
-  │       ├── supabase.ts          # Supabase client
-  │       └── rate-limit.ts        # IP-based rate limiting
-  └── types/
-      ├── estimate.ts              # EstimateLineItem, EstimateResult
-      └── price.ts                 # PriceItem
-
-  ---
-  Scripts
-
-  npm run dev    # Development server (Webpack)
-  npm run build  # Production build
-  npm run start  # Production server
-  npm run lint   # ESLint
-
-  ---
-  Security
-
-  - All AI and database calls run exclusively in Server Actions — no API keys are ever sent to the client
-  - Audio uploads are validated for MIME type and size before processing
-  - AI responses are sanitized before storage or display
-  - Security headers configured: HSTS, X-Frame-Options, Content Security Policy
-  - IP-based rate limiting on transcription and estimate generation endpoints
-
-  ---
-  Deployment
-
-  The app can be deployed to any platform that supports Next.js (Vercel, Railway, Render, self-hosted).
-
-  Set all environment variables from .env.example in your hosting platform's dashboard before deploying.
-
-  npm run build
-  npm run start
-
-❯ no actually regive me the code for readme or whatever without numbers i need to paste it right                                                                                                                                       
-● Here it is — everything inside the code block, ready to paste:
-                                                                                                                                        # VoltVocal                                                                                                                                                                                                                                                                 A field estimating SaaS for electrical contractors. Walk a job site, speak your observations, and get a structured, exportable        estimate in seconds — powered by AI.
-                                                                                                                                      
-  **Workflow:** Record → Transcribe → Estimate → Export PDF
-
-  ---
-
-  ## Features
-
-  - **Voice recording** — capture job site observations hands-free via browser microphone
-  - **AI transcription** — Groq Whisper converts audio to text accurately
-  - **Smart estimation** — Llama 3.3-70b extracts line items, quantities, unit prices, and totals from natural speech
-  - **Inline editing** — adjust any line item before saving
-  - **Price list** — maintain a custom catalog of your common materials and labor rates
-  - **PDF export** — generate a professional estimate PDF with your company name
-  - **Saved estimates** — persist and retrieve past estimates via Supabase
-  - **PWA** — installable as a mobile app, works offline
-
-  ---
-
-  ## Tech Stack
-
-  | Layer | Technology |
-  |-------|------------|
-  | Framework | Next.js 16 (App Router, Server Actions) |
-  | Language | TypeScript |
-  | Styling | Tailwind CSS 4 |
-  | AI — Transcription | Groq Whisper |
-  | AI — Estimation | Groq `llama-3.3-70b-versatile` |
-  | Database | Supabase (PostgreSQL) |
-  | PDF | jsPDF + jspdf-autotable |
-  | PWA | next-pwa |
-
-  ---
-
-  ## Prerequisites
-
-  - Node.js 18+
-  - A [Groq](https://console.groq.com) account (free tier available)
-  - A [Supabase](https://supabase.com) project
-
-  ---
-
-  ## Setup
-
-  ### 1. Install dependencies
-
-  \```bash
-  npm install
-  \```
-
-  ### 2. Configure environment variables
-
-  Copy `.env.example` to `.env.local` and fill in your values:
-
-  \```bash
-  cp .env.example .env.local
-  \```
-
-  \```env
-  # Required
-  GROQ_API_KEY=your_groq_api_key
-
-  SUPABASE_URL=https://your-project.supabase.co
-  SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
-
-  # Optional
-  GROQ_MODEL=llama-3.3-70b-versatile        # default
-  MAX_AUDIO_BYTES=26214400                   # default 25 MB, max 50 MB
-  NEXT_PUBLIC_COMPANY_NAME=Your Company Name # appears on exported PDFs
-  \```
-
-  > **Note:** `SUPABASE_SERVICE_ROLE_KEY` is a privileged key — it is server-only and never exposed to the client.
-
-  ### 3. Set up Supabase tables
-
-  In your Supabase project, create the following tables:
-
-  **`estimates`**
-  | Column | Type | Notes |
-  |--------|------|-------|
-  | id | uuid | primary key, default `gen_random_uuid()` |
-  | created_at | timestamptz | default `now()` |
-  | total | numeric | |
-  | notes | text | |
-  | transcript | text | |
-  | line_items | jsonb | |
-
-  **`price_list`**
-  | Column | Type | Notes |
-  |--------|------|-------|
-  | id | uuid | primary key, default `gen_random_uuid()` |
-  | created_at | timestamptz | default `now()` |
-  | name | text | |
-  | unit | text | |
-  | unit_price | numeric | |
-
-  **`contractor_profile`**
-  | Column | Type | Notes |
-  |--------|------|-------|
-  | id | uuid | primary key |
-  | company_name | text | |
-  | license_number | text | |
-  | phone | text | |
-  | email | text | |
-
-  ### 4. Run the development server
-
-  \```bash
-  npm run dev
-  \```
-
-  Open [http://localhost:3000](http://localhost:3000) in your browser.
-
-  ---
-
-  ## Usage
-
-  1. **Record** — tap the microphone button and describe the job (e.g., *"3 duplex outlets at $85 each, 2 hours labor at $95 an hour, 
-  one panel upgrade $450"*)
-  2. **Review** — the AI parses your speech into a line-item table with quantities, unit prices, and a total
-  3. **Edit** — adjust any field inline if needed
-  4. **Save or Export** — save the estimate to your history or download a PDF
-
-  ---
-
-  ## Project Structure
-
-  \```
-  src/
-  ├── app/
-  │   ├── dashboard/
-  │   │   ├── page.tsx          # Main estimator UI
-  │   │   ├── prices/page.tsx   # Price list management
-  │   │   └── settings/page.tsx # Contractor profile & settings
-  │   └── actions/
-  │       ├── estimate-actions.ts  # Transcribe, generate, save, delete
-  │       ├── price-actions.ts     # CRUD for price list
-  │       └── settings-actions.ts  # Contractor profile
-  ├── components/
-  │   ├── estimate-recorder.tsx    # Recording UI + waveform
-  │   ├── estimate-table.tsx       # Editable line-item table
-  │   ├── saved-estimates.tsx      # Estimate history
-  │   └── install-prompt.tsx       # PWA install prompt
-  ├── lib/
-  │   ├── audio-validation.ts      # File size + MIME validation
-  │   ├── estimate-pdf.ts          # PDF generation
-  │   ├── sanitize-ai-text.ts      # Input/output sanitization
-  │   └── server/
-  │       ├── groq-estimate.ts     # Groq API (Whisper + Llama)
-  │       ├── supabase.ts          # Supabase client
-  │       └── rate-limit.ts        # IP-based rate limiting
-  └── types/
-      ├── estimate.ts              # EstimateLineItem, EstimateResult
-      └── price.ts                 # PriceItem
-  \```
-
-  ---
-
-  ## Scripts
-
-  \```bash
-  npm run dev    # Development server (Webpack)
-  npm run build  # Production build
-  npm run start  # Production server
-  npm run lint   # ESLint
-  \```
-
-  ---
-
-  ## Security
-
-  - All AI and database calls run exclusively in Server Actions — no API keys are ever sent to the client
-  - Audio uploads are validated for MIME type and size before processing
-  - AI responses are sanitized before storage or display
-  - Security headers configured: HSTS, `X-Frame-Options`, Content Security Policy
-  - IP-based rate limiting on transcription and estimate generation endpoints
-
-  ---
-
-  ## Deployment
-
-  The app can be deployed to any platform that supports Next.js (Vercel, Railway, Render, self-hosted).
-
-  Set all environment variables from `.env.example` in your hosting platform's dashboard before deploying.
-
-  \```bash
-  npm run build
-  npm run start
-  \```
+# VoltVocal — Field Estimating System
+
+Voice-first estimating for Ontario electrical contractors. Speak your job site notes. Get a professional estimate in under 3 seconds.
+
+---
+
+## What It Does
+
+VoltVocal lets electrical contractors walk through a job site, speak their materials and quantities out loud, and instantly receive a structured professional estimate ready to save and export as a PDF.
+
+No typing. No spreadsheets. No guessing.
+
+---
+
+## Features
+
+- Voice to Estimate — Groq Whisper transcribes audio, Llama 3.3 structures it into line items in under 3 seconds
+- Your Price List — Save your own rates once, the AI uses your exact prices automatically
+- Inline Editing — Tap any field to correct quantities, prices, or descriptions before saving
+- PDF Export — Professional quote with your company name, ESA license number, and contact info
+- Estimate History — All saved estimates stored securely, accessible anytime
+- Contractor Settings — Company info saved to every PDF automatically
+- PWA — Installs on your phone home screen, works offline
+- Ontario-Specific — CAD pricing, HST calculation, built for the GTA market
+
+---
+
+## Tech Stack
+
+- Framework: Next.js 15 App Router
+- Language: TypeScript
+- Styling: Tailwind CSS
+- Transcription: Groq Whisper Large v3
+- Inference: Groq Llama 3.3 70B Versatile
+- Database: Supabase / PostgreSQL
+- Deployment: Vercel
+- PDF: jsPDF + AutoTable
+
+---
+
+## Security
+
+- All API keys server-only, never exposed to the client
+- All AI calls via Next.js Server Actions
+- Row Level Security on all Supabase tables
+- Input sanitization with prompt injection detection
+- Audio validation via MIME type and magic bytes
+- Per-action rate limiting
+- Security headers: CSP, X-Frame-Options, Referrer-Policy
+
+---
+
+## Local Setup
+
+1. Clone the repo
+
+```
+git clone https://github.com/OmarA7860/contractor-saas
+cd contractor-saas
+npm install
+```
+
+2. Create .env.local
+
+```
+GROQ_API_KEY=your_groq_api_key
+GROQ_MODEL=llama-3.3-70b-versatile
+SUPABASE_URL=your_supabase_project_url
+SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
+```
+
+3. Run this SQL in your Supabase SQL Editor
+
+```sql
+create table estimates (
+  id uuid primary key default gen_random_uuid(),
+  created_at timestamptz not null default now(),
+  transcript text not null,
+  total numeric(10,2) not null,
+  notes text not null default '',
+  line_items jsonb not null default '[]'
+);
+
+create table price_list (
+  id uuid primary key default gen_random_uuid(),
+  created_at timestamptz default now(),
+  name text not null,
+  unit text not null default 'each',
+  unit_price numeric(10,2) not null,
+  category text not null default 'general'
+);
+
+create table contractor_profile (
+  id uuid primary key default gen_random_uuid(),
+  created_at timestamptz default now(),
+  company_name text not null default '',
+  license_number text not null default '',
+  phone text not null default '',
+  email text not null default ''
+);
+
+alter table estimates enable row level security;
+alter table price_list enable row level security;
+alter table contractor_profile enable row level security;
+```
+
+4. Start the dev server
+
+```
+npm run dev
+```
+
+Open http://localhost:3000/dashboard
+
+---
+
+## How It Works
+
+1. Contractor taps Record and speaks their job site notes
+2. Audio is sent to a Next.js Server Action
+3. Groq Whisper transcribes the audio to text
+4. The transcript is sent to Llama 3.3 with the contractor's saved price list
+5. Llama returns structured JSON line items
+6. Estimate renders in the UI with inline editing
+7. Contractor saves and exports PDF
+
+Total time from voice note to saved estimate: under 3 seconds.
+
+---
+
+## Roadmap
+
+- Supabase Auth — per-contractor accounts
+- Send quote to client via email
+- Client approval flow
+- Expo mobile app for iOS and Android
+- Stripe subscription billing
+- Live Canadian material pricing
+
+---
+
+## Built By
+
+Omar Ahmed — Software Engineering Student
+
+GitHub: https://github.com/OmarA7860
+
+---
+
+VoltVocal generates estimates based on contractor-provided information. All code compliance, permit requirements, and material specifications are the responsibility of the licensed contractor.
