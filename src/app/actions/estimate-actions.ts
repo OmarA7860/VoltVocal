@@ -15,7 +15,6 @@ import {
   transcribeWithGroq,
 } from "@/lib/server/groq-estimate";
 import { checkRateLimit } from "@/lib/server/rate-limit";
-import { requireUser } from "@/lib/server/supabase-auth";
 
 type SavedEstimate = {
   id: string;
@@ -69,8 +68,6 @@ export async function transcribeAudioAction(
   formData: FormData,
 ): Promise<{ ok: true; transcript: string } | { ok: false; error: string }> {
   try {
-    await requireUser();
-
     const key = await rateLimitKey("tr");
     if (!checkRateLimit(key)) {
       return { ok: false, error: "Too many requests. Please wait a few minutes." };
@@ -97,8 +94,6 @@ export async function generateEstimateAction(
   transcript: string,
 ): Promise<{ ok: true; estimate: EstimateResult } | { ok: false; error: string }> {
   try {
-    const user = await requireUser();
-
     const key = await rateLimitKey("est");
     if (!checkRateLimit(key)) {
       return { ok: false, error: "Too many requests. Please wait a few minutes." };
@@ -118,7 +113,6 @@ export async function generateEstimateAction(
       const { data } = await supabase
         .from("price_list")
         .select("id, created_at, name, unit, unit_price, category")
-        .eq("user_id", user.id)
         .order("name");
       if (data) priceList = data;
     } catch {
@@ -137,8 +131,6 @@ export async function saveEstimateAction(
   estimate: EstimateResult,
 ): Promise<{ ok: true; id: string } | { ok: false; error: string }> {
   try {
-    const user = await requireUser();
-
     const key = await rateLimitKey("save");
     if (!checkRateLimit(key)) {
       return { ok: false, error: "Too many requests. Please wait a few minutes." };
@@ -178,7 +170,6 @@ export async function saveEstimateAction(
     const { data, error } = await supabase
       .from("estimates")
       .insert({
-        user_id: user.id,
         transcript: cleanTranscript,
         total: validatedTotal,
         notes: validatedNotes,
@@ -204,8 +195,6 @@ export async function deleteEstimateAction(
       return { ok: false, error: "Invalid estimate ID." };
     }
 
-    const user = await requireUser();
-
     const key = await rateLimitKey("del");
     if (!checkRateLimit(key)) {
       return { ok: false, error: "Too many requests. Please wait a few minutes." };
@@ -217,8 +206,7 @@ export async function deleteEstimateAction(
     const { error } = await supabase
       .from("estimates")
       .delete()
-      .eq("id", id)
-      .eq("user_id", user.id);
+      .eq("id", id);
 
     if (error) throw new Error("DB_DELETE_FAILED");
     return { ok: true };
@@ -231,8 +219,6 @@ export async function getEstimatesAction(): Promise<
   { ok: true; estimates: SavedEstimate[] } | { ok: false; error: string }
 > {
   try {
-    const user = await requireUser();
-
     const key = await rateLimitKey("get");
     if (!checkRateLimit(key)) {
       return { ok: false, error: "Too many requests. Please wait a few minutes." };
@@ -244,7 +230,6 @@ export async function getEstimatesAction(): Promise<
     const { data, error } = await supabase
       .from("estimates")
       .select("id, created_at, total, notes, transcript, line_items")
-      .eq("user_id", user.id)
       .order("created_at", { ascending: false })
       .limit(50);
 

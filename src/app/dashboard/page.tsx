@@ -3,7 +3,6 @@ import Image from "next/image";
 import { EstimateRecorder } from "@/components/estimate-recorder";
 import { SavedEstimates } from "@/components/saved-estimates";
 import { InstallPrompt } from "@/components/install-prompt";
-import { SignOutButton } from "@/components/sign-out-button";
 
 export default function DashboardPage() {
   return (
@@ -50,7 +49,6 @@ export default function DashboardPage() {
             >
               Settings
             </Link>
-            <SignOutButton />
           </nav>
         </div>
       </header>

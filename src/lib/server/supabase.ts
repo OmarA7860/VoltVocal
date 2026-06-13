@@ -6,7 +6,6 @@ import type { PriceItem } from "@/types/price";
 type EstimateRow = {
   id: string;
   created_at: string;
-  user_id: string;
   total: number;
   notes: string;
   transcript: string;
@@ -15,7 +14,6 @@ type EstimateRow = {
 
 type ContractorProfileRow = {
   id: string;
-  user_id: string;
   company_name: string;
   license_number: string;
   phone: string;
@@ -28,7 +26,7 @@ type Database = {
       estimates: {
         Row: EstimateRow;
         Insert: Omit<EstimateRow, "id" | "created_at">;
-        Update: Partial<Omit<EstimateRow, "id" | "created_at" | "user_id">>;
+        Update: Partial<Omit<EstimateRow, "id" | "created_at">>;
         Relationships: [];
       };
       price_list: {
@@ -39,7 +37,7 @@ type Database = {
       };
       contractor_profile: {
         Row: ContractorProfileRow;
-        Insert: Omit<ContractorProfileRow, "id">;
+        Insert: ContractorProfileRow;
         Update: Partial<Omit<ContractorProfileRow, "id">>;
         Relationships: [];
       };
