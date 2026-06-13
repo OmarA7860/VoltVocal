@@ -7,6 +7,7 @@ import {
   sanitizeNumericInput,
 } from "@/lib/sanitize-ai-text";
 import type { PriceItem } from "@/types/price";
+import { requireUser } from "@/lib/server/supabase-auth";
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const VALID_CATEGORIES = ["general", "receptacles", "cable", "labor", "misc"] as const;
@@ -69,6 +70,8 @@ export async function getPriceListAction(): Promise<
   { ok: true; items: PriceItem[] } | { ok: false; error: string }
 > {
   try {
+    const user = await requireUser();
+
     const key = await rateLimitKey("pl-get");
     if (!checkRateLimit(key)) {
       return { ok: false, error: "Too many requests. Please wait a few minutes." };
@@ -80,6 +83,7 @@ export async function getPriceListAction(): Promise<
     const { data, error } = await supabase
       .from("price_list")
       .select("id, created_at, name, unit, unit_price, category")
+      .eq("user_id", user.id)
       .order("name");
 
     if (error) throw new Error("DB_FETCH_FAILED");
@@ -93,6 +97,8 @@ export async function savePriceItemAction(
   input: ItemInput,
 ): Promise<{ ok: true; item: PriceItem } | { ok: false; error: string }> {
   try {
+    const user = await requireUser();
+
     const key = await rateLimitKey("pl-save");
     if (!checkRateLimit(key)) {
       return { ok: false, error: "Too many requests. Please wait a few minutes." };
@@ -106,7 +112,7 @@ export async function savePriceItemAction(
 
     const { data, error } = await supabase
       .from("price_list")
-      .insert(sanitized)
+      .insert({ ...sanitized, user_id: user.id })
       .select()
       .single();
 
@@ -126,6 +132,8 @@ export async function updatePriceItemAction(
       return { ok: false, error: "Invalid item ID." };
     }
 
+    const user = await requireUser();
+
     const key = await rateLimitKey("pl-upd");
     if (!checkRateLimit(key)) {
       return { ok: false, error: "Too many requests. Please wait a few minutes." };
@@ -141,6 +149,7 @@ export async function updatePriceItemAction(
       .from("price_list")
       .update(sanitized)
       .eq("id", id)
+      .eq("user_id", user.id)
       .select()
       .single();
 
@@ -159,6 +168,8 @@ export async function deletePriceItemAction(
       return { ok: false, error: "Invalid item ID." };
     }
 
+    const user = await requireUser();
+
     const key = await rateLimitKey("pl-del");
     if (!checkRateLimit(key)) {
       return { ok: false, error: "Too many requests. Please wait a few minutes." };
@@ -167,7 +178,11 @@ export async function deletePriceItemAction(
     const { getSupabaseClient } = await import("@/lib/server/supabase");
     const supabase = getSupabaseClient();
 
-    const { error } = await supabase.from("price_list").delete().eq("id", id);
+    const { error } = await supabase
+      .from("price_list")
+      .delete()
+      .eq("id", id)
+      .eq("user_id", user.id);
 
     if (error) throw new Error("DB_DELETE_FAILED");
     return { ok: true };

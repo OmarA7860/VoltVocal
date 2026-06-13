@@ -3,6 +3,7 @@
 import { headers } from "next/headers";
 import { checkRateLimit } from "@/lib/server/rate-limit";
 import { sanitizeUserEditedText } from "@/lib/sanitize-ai-text";
+import { requireUser } from "@/lib/server/supabase-auth";
 
 export type ContractorProfile = {
   company_name: string;
@@ -55,6 +56,8 @@ export async function getContractorProfileAction(): Promise<
   { ok: true; profile: ContractorProfile | null } | { ok: false; error: string }
 > {
   try {
+    const user = await requireUser();
+
     const key = await rateLimitKey("cfg-get");
     if (!checkRateLimit(key)) {
       return { ok: false, error: "Too many requests. Please wait a few minutes." };
@@ -65,6 +68,7 @@ export async function getContractorProfileAction(): Promise<
     const { data, error } = await supabase
       .from("contractor_profile")
       .select("company_name, license_number, phone, email")
+      .eq("user_id", user.id)
       .limit(1)
       .maybeSingle();
     if (error) throw error;
@@ -75,12 +79,12 @@ export async function getContractorProfileAction(): Promise<
   }
 }
 
-const PROFILE_ID = "00000000-0000-0000-0000-000000000001";
-
 export async function saveContractorProfileAction(
   profile: ContractorProfile,
 ): Promise<{ ok: true } | { ok: false; error: string }> {
   try {
+    const user = await requireUser();
+
     const key = await rateLimitKey("cfg-save");
     if (!checkRateLimit(key)) {
       return { ok: false, error: "Too many requests. Please wait a few minutes." };
@@ -98,13 +102,13 @@ export async function saveContractorProfileAction(
       .from("contractor_profile")
       .upsert(
         {
-          id: PROFILE_ID,
+          user_id:        user.id,
           company_name:   safe.company_name,
           license_number: safe.license_number,
           phone:          safe.phone,
           email:          safe.email,
         },
-        { onConflict: "id" },
+        { onConflict: "user_id" },
       );
     if (error) throw error;
     return { ok: true };

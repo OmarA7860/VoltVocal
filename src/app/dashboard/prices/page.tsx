@@ -11,6 +11,7 @@ import {
   updatePriceItemAction,
 } from "@/app/actions/price-actions";
 import type { PriceItem } from "@/types/price";
+import { SignOutButton } from "@/components/sign-out-button";
 
 const CATEGORIES = ["general", "receptacles", "cable", "labor", "misc"] as const;
 
@@ -134,6 +135,7 @@ export default function PricesPage() {
             >
               Settings
             </Link>
+            <SignOutButton />
           </nav>
         </div>
       </header>

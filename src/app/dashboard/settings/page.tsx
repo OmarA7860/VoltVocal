@@ -9,6 +9,7 @@ import {
   saveContractorProfileAction,
 } from "@/app/actions/settings-actions";
 import type { ContractorProfile } from "@/app/actions/settings-actions";
+import { SignOutButton } from "@/components/sign-out-button";
 
 const EMPTY: ContractorProfile = {
   company_name: "",
@@ -95,6 +96,7 @@ export default function SettingsPage() {
               Settings
               <span className="absolute inset-0 rounded-md bg-[#3A8F5F]/10" />
             </Link>
+            <SignOutButton />
           </nav>
         </div>
       </header>
