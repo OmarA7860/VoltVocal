@@ -31,9 +31,14 @@ export async function proxy(request: NextRequest) {
   });
 
   // Refresh session — must not use getSession() here (see @supabase/ssr docs)
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  let user = null;
+  try {
+    const { data } = await supabase.auth.getUser();
+    user = data.user;
+  } catch {
+    // Auth service unavailable — pass the request through
+    return supabaseResponse;
+  }
 
   const path = request.nextUrl.pathname;
 
