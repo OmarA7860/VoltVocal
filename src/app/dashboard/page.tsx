@@ -11,7 +11,7 @@ export default function DashboardPage() {
         <div className="mx-auto flex max-w-5xl items-center gap-2 px-3 py-2.5 sm:gap-4 sm:px-6 sm:py-3">
           <div className="flex shrink-0 items-center gap-2 sm:gap-3">
             <Image
-              src="/logo.png"
+              src="/logo-mark.png"
               alt="VoltVocal"
               width={36}
               height={36}

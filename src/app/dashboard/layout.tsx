@@ -10,10 +10,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         style={{ borderBottom: "1px solid rgba(255,255,255,0.08)" }}
       >
         <Image
-          src="/logo.png"
+          src="/logo-mark.png"
           alt="VoltVocal"
-          width={28}
-          height={28}
+          width={36}
+          height={36}
           style={{ objectFit: "contain" }}
         />
         <span className="flex-1 text-center text-[11px] font-bold tracking-[0.3em] text-[#E0EDE5] uppercase">

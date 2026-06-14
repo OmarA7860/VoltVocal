@@ -58,10 +58,10 @@ export default function SettingsPage() {
         <div className="mx-auto flex max-w-5xl items-center gap-4 px-4 py-3 sm:px-6">
           <Link href="/dashboard" className="flex items-center gap-3">
             <Image
-              src="/logo.png"
+              src="/logo-mark.png"
               alt="VoltVocal"
-              width={44}
-              height={44}
+              width={36}
+              height={36}
               style={{ objectFit: 'contain' }}
             />
             <div>

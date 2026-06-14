@@ -6,6 +6,7 @@ import {
   useRef,
   useState,
 } from "react";
+import Image from "next/image";
 import { FileText, Mic, Square } from "lucide-react";
 import { transcribeAudioAction, generateEstimateAction } from "@/app/actions/estimate-actions";
 import { EstimateTable } from "@/components/estimate-table";
@@ -195,7 +196,14 @@ export function EstimateRecorder() {
                   className="relative flex h-24 w-24 items-center justify-center rounded-full bg-[#3A8F5F] shadow-[0_0_32px_rgba(58,143,95,0.35)] transition-all duration-300 hover:scale-105 hover:bg-[#2E7049] hover:shadow-[0_0_48px_rgba(58,143,95,0.5)] active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#4DB87B] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0E1612]"
                   aria-label="Start recording"
                 >
-                  <Mic className="h-9 w-9 text-white" strokeWidth={1.75} />
+                  <Image
+                    src="/logo-mark.png"
+                    alt="Record"
+                    width={56}
+                    height={56}
+                    style={{ objectFit: "contain" }}
+                    priority
+                  />
                 </button>
               </div>
               <div className="text-center">
