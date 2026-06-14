@@ -6,8 +6,7 @@ import {
   useRef,
   useState,
 } from "react";
-import Image from "next/image";
-import { Square } from "lucide-react";
+import { FileText, Mic, Square } from "lucide-react";
 import { transcribeAudioAction, generateEstimateAction } from "@/app/actions/estimate-actions";
 import { EstimateTable } from "@/components/estimate-table";
 import type { EstimateResult } from "@/types/estimate";
@@ -188,29 +187,15 @@ export function EstimateRecorder() {
           {phase === "idle" && (
             <div className="animate-fade-in flex flex-col items-center gap-6">
               <div className="relative flex items-center justify-center">
-                {/* Radial background glow */}
-                <div
-                  className="pointer-events-none absolute"
-                  style={{
-                    width: 300,
-                    height: 300,
-                    background: "radial-gradient(circle, rgba(58,143,95,0.08) 0%, transparent 70%)",
-                  }}
-                />
+                <span className="pulse-ring absolute h-32 w-32 rounded-full border border-[#3A8F5F]/25" />
+                <span className="pulse-ring absolute h-28 w-28 rounded-full border border-[#3A8F5F]/15" style={{ animationDelay: "0.5s" }} />
                 <button
                   type="button"
                   onClick={() => void startRecording()}
-                  className="record-btn"
+                  className="relative flex h-24 w-24 items-center justify-center rounded-full bg-[#3A8F5F] shadow-[0_0_32px_rgba(58,143,95,0.35)] transition-all duration-300 hover:scale-105 hover:bg-[#2E7049] hover:shadow-[0_0_48px_rgba(58,143,95,0.5)] active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#4DB87B] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0E1612]"
                   aria-label="Start recording"
                 >
-                  <Image
-                    src="/logo.png"
-                    alt="Record"
-                    width={48}
-                    height={48}
-                    style={{ objectFit: "contain" }}
-                    priority
-                  />
+                  <Mic className="h-9 w-9 text-white" strokeWidth={1.75} />
                 </button>
               </div>
               <div className="text-center">
@@ -225,28 +210,20 @@ export function EstimateRecorder() {
           {/* ── RECORDING ── */}
           {phase === "recording" && (
             <div className="animate-fade-in flex flex-col items-center gap-6">
-              {/* Pulsing logo button */}
-              <div className="relative flex items-center justify-center">
-                <div
-                  className="pointer-events-none absolute"
-                  style={{
-                    width: 300,
-                    height: 300,
-                    background: "radial-gradient(circle, rgba(58,143,95,0.08) 0%, transparent 70%)",
-                  }}
-                />
-                <div className="record-btn record-btn-pulse">
-                  <Image
-                    src="/logo.png"
-                    alt="Recording"
-                    width={48}
-                    height={48}
-                    style={{ objectFit: "contain" }}
+              <div className="flex items-center justify-center gap-0.5 h-10 w-full max-w-xs">
+                {WAVE_HEIGHTS.map((h, i) => (
+                  <div
+                    key={i}
+                    className="wave-bar w-1 bg-red-400/80 rounded-full"
+                    style={{
+                      height: `${h}%`,
+                      animationDelay: `${i * 0.035}s`,
+                      animationDuration: `${0.55 + (i % 4) * 0.12}s`,
+                    }}
                   />
-                </div>
+                ))}
               </div>
 
-              {/* Timer */}
               <div className="flex items-center gap-3">
                 <span className="relative flex h-3 w-3">
                   <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-75" />
@@ -257,22 +234,6 @@ export function EstimateRecorder() {
                 </span>
               </div>
 
-              {/* Waveform */}
-              <div className="flex items-center justify-center gap-0.5 h-8 w-full max-w-xs">
-                {WAVE_HEIGHTS.map((h, i) => (
-                  <div
-                    key={i}
-                    className="wave-bar w-1 bg-red-400/70 rounded-full"
-                    style={{
-                      height: `${h}%`,
-                      animationDelay: `${i * 0.035}s`,
-                      animationDuration: `${0.55 + (i % 4) * 0.12}s`,
-                    }}
-                  />
-                ))}
-              </div>
-
-              {/* Stop button */}
               <button
                 type="button"
                 onClick={stopRecording}
@@ -287,16 +248,14 @@ export function EstimateRecorder() {
           {/* ── TRANSCRIBING ── */}
           {phase === "transcribing" && (
             <div className="animate-fade-in flex flex-col items-center gap-5 py-2">
-              <div className="relative flex items-center justify-center">
-                {/* Spinning ring around circle */}
-                <svg className="absolute h-[116px] w-[116px] -rotate-90" viewBox="0 0 116 116" style={{ animation: "spin 1.4s linear infinite" }}>
-                  <circle cx="58" cy="58" r="54" fill="none" stroke="#1E3025" strokeWidth="2" />
-                  <circle cx="58" cy="58" r="54" fill="none" stroke="#3A8F5F" strokeWidth="2.5"
-                    strokeDasharray="339" strokeDashoffset="254" strokeLinecap="round" />
+              <div className="relative flex h-16 w-16 items-center justify-center rounded-full bg-[#131E17] ring-1 ring-[#2A4234]">
+                <svg className="absolute h-16 w-16 -rotate-90" viewBox="0 0 56 56">
+                  <circle cx="28" cy="28" r="24" fill="none" stroke="#1E3025" strokeWidth="2" />
+                  <circle cx="28" cy="28" r="24" fill="none" stroke="#3A8F5F" strokeWidth="2"
+                    strokeDasharray="150.8" strokeDashoffset="37.7" strokeLinecap="round"
+                    style={{ animation: "spin 1.4s linear infinite" }} />
                 </svg>
-                <div className="record-btn opacity-70" style={{ pointerEvents: "none" }}>
-                  <Image src="/logo.png" alt="Transcribing" width={48} height={48} style={{ objectFit: "contain" }} />
-                </div>
+                <Mic className="h-6 w-6 text-[#4DB87B]" />
               </div>
               <div className="text-center">
                 <p className="text-sm font-bold text-[#E0EDE5]">Transcribing audio…</p>
@@ -313,15 +272,14 @@ export function EstimateRecorder() {
           {/* ── GENERATING ── */}
           {phase === "generating" && (
             <div className="animate-fade-in flex flex-col items-center gap-5 py-2">
-              <div className="relative flex items-center justify-center">
-                <svg className="absolute h-[116px] w-[116px] -rotate-90" viewBox="0 0 116 116" style={{ animation: "spin 1s linear infinite" }}>
-                  <circle cx="58" cy="58" r="54" fill="none" stroke="#1E3025" strokeWidth="2" />
-                  <circle cx="58" cy="58" r="54" fill="none" stroke="#4DB87B" strokeWidth="2.5"
-                    strokeDasharray="339" strokeDashoffset="169" strokeLinecap="round" />
+              <div className="relative flex h-16 w-16 items-center justify-center rounded-full bg-[#131E17] ring-1 ring-[#2A4234]">
+                <svg className="absolute h-16 w-16 -rotate-90" viewBox="0 0 56 56">
+                  <circle cx="28" cy="28" r="24" fill="none" stroke="#1E3025" strokeWidth="2" />
+                  <circle cx="28" cy="28" r="24" fill="none" stroke="#4DB87B" strokeWidth="2"
+                    strokeDasharray="150.8" strokeDashoffset="75.4" strokeLinecap="round"
+                    style={{ animation: "spin 1s linear infinite" }} />
                 </svg>
-                <div className="record-btn opacity-70" style={{ pointerEvents: "none" }}>
-                  <Image src="/logo.png" alt="Generating" width={48} height={48} style={{ objectFit: "contain" }} />
-                </div>
+                <FileText className="h-6 w-6 text-[#4DB87B]" />
               </div>
               <div className="text-center">
                 <p className="text-sm font-bold text-[#E0EDE5]">Building estimate…</p>
