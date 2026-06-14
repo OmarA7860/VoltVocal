@@ -44,6 +44,8 @@ export function EstimateTable({ estimate, companyName, transcript, onDeleted }: 
   const [isSaving, setIsSaving]           = useState(false);
   const [saveError, setSaveError]         = useState<string | null>(null);
   const [saved, setSaved]                 = useState(false);
+  const [clientName, setClientName]       = useState("");
+  const [clientAddress, setClientAddress] = useState("");
   const [contractorProfile, setContractorProfile] = useState<ContractorProfile | null>(null);
 
   useEffect(() => {
@@ -104,7 +106,7 @@ export function EstimateTable({ estimate, companyName, transcript, onDeleted }: 
     setIsSaving(true);
     setSaveError(null);
     const currentEstimate: EstimateResult = { lineItems, total: subtotal, notes };
-    const result = await saveEstimateAction(transcript, currentEstimate);
+    const result = await saveEstimateAction(transcript, currentEstimate, clientName.trim(), clientAddress.trim());
     setIsSaving(false);
     if (result.ok) setSaved(true);
     else setSaveError(result.error);
@@ -153,6 +155,38 @@ export function EstimateTable({ estimate, companyName, transcript, onDeleted }: 
         </div>
       </div>
 
+      {/* Client info (optional) — only shown before saving */}
+      {transcript && !saved && (
+        <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:gap-3">
+          <div className="flex-1">
+            <label className="mb-1 block text-[9px] font-bold tracking-[0.2em] text-[#4A6857] uppercase font-mono">
+              Client Name <span className="text-[#2A4234] normal-case tracking-normal font-sans font-normal">(optional)</span>
+            </label>
+            <input
+              type="text"
+              placeholder="e.g. John Smith"
+              value={clientName}
+              maxLength={200}
+              onChange={(e) => setClientName(e.target.value)}
+              className="w-full rounded-lg border border-[#1E3025] bg-[#090D0B] px-3 py-2 text-sm text-[#E0EDE5] placeholder-[#2A4234] outline-none transition-colors focus:border-[#3A8F5F] focus:ring-1 focus:ring-[#3A8F5F]/30"
+            />
+          </div>
+          <div className="flex-1">
+            <label className="mb-1 block text-[9px] font-bold tracking-[0.2em] text-[#4A6857] uppercase font-mono">
+              Job Address <span className="text-[#2A4234] normal-case tracking-normal font-sans font-normal">(optional)</span>
+            </label>
+            <input
+              type="text"
+              placeholder="e.g. 123 Main St, Toronto"
+              value={clientAddress}
+              maxLength={300}
+              onChange={(e) => setClientAddress(e.target.value)}
+              className="w-full rounded-lg border border-[#1E3025] bg-[#090D0B] px-3 py-2 text-sm text-[#E0EDE5] placeholder-[#2A4234] outline-none transition-colors focus:border-[#3A8F5F] focus:ring-1 focus:ring-[#3A8F5F]/30"
+            />
+          </div>
+        </div>
+      )}
+
       {/* Action buttons */}
       <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-end sm:gap-2.5">
         <button
@@ -165,6 +199,8 @@ export function EstimateTable({ estimate, companyName, transcript, onDeleted }: 
                 licenseNumber: contractorProfile?.license_number,
                 phone: contractorProfile?.phone,
                 email: contractorProfile?.email,
+                clientName: clientName.trim() || undefined,
+                clientAddress: clientAddress.trim() || undefined,
               },
             )
           }

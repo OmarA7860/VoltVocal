@@ -18,6 +18,8 @@ type DownloadOptions = {
   licenseNumber?: string;
   phone?: string;
   email?: string;
+  clientName?: string;
+  clientAddress?: string;
 };
 
 function resolveCompanyName(options?: DownloadOptions): string {
@@ -103,8 +105,30 @@ export function downloadEstimatePdf(
   const dateStr = new Date().toLocaleDateString("en-CA", { dateStyle: "long" });
   doc.text(`Date: ${dateStr}`, pageWidth - margin, bandH + 6.5, { align: "right" });
 
+  // ─── PREPARED FOR ───────────────────────────────────────────────────────────
+  let preparedForH = 0;
+  if (options?.clientName?.trim()) {
+    preparedForH = 14;
+    doc.setFillColor(245, 248, 246);
+    doc.rect(0, bandH + stripH, pageWidth, preparedForH, "F");
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(7.5);
+    doc.setTextColor(...GREY_TEXT);
+    doc.text("PREPARED FOR", margin, bandH + stripH + 5.5);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(9);
+    doc.setTextColor(30, 40, 35);
+    doc.text(options.clientName.trim(), margin, bandH + stripH + 11);
+    if (options?.clientAddress?.trim()) {
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(8);
+      doc.setTextColor(...GREY_TEXT);
+      doc.text(options.clientAddress.trim(), margin + doc.getTextWidth(options.clientName.trim()) + 4, bandH + stripH + 11);
+    }
+  }
+
   // ─── TABLE ──────────────────────────────────────────────────────────────────
-  let tableStartY = bandH + stripH + 8;
+  let tableStartY = bandH + stripH + preparedForH + 8;
 
   const body =
     safeEstimate.lineItems.length > 0

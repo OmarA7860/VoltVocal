@@ -23,6 +23,8 @@ type SavedEstimate = {
   notes: string;
   transcript: string;
   line_items: EstimateResult["lineItems"];
+  client_name: string;
+  client_address: string;
 };
 
 async function rateLimitKey(prefix: string): Promise<string> {
@@ -129,6 +131,8 @@ export async function generateEstimateAction(
 export async function saveEstimateAction(
   transcript: string,
   estimate: EstimateResult,
+  clientName?: string,
+  clientAddress?: string,
 ): Promise<{ ok: true; id: string } | { ok: false; error: string }> {
   try {
     const key = await rateLimitKey("save");
@@ -166,6 +170,8 @@ export async function saveEstimateAction(
       sanitizePlainText(estimate.notes, { preserveNewlines: true }),
       1000,
     );
+    const validatedClientName = truncateField(sanitizeUserEditedText(clientName ?? "", 200), 200);
+    const validatedClientAddress = truncateField(sanitizeUserEditedText(clientAddress ?? "", 300), 300);
 
     const { data, error } = await supabase
       .from("estimates")
@@ -174,6 +180,8 @@ export async function saveEstimateAction(
         total: validatedTotal,
         notes: validatedNotes,
         line_items: validatedLineItems,
+        client_name: validatedClientName,
+        client_address: validatedClientAddress,
       })
       .select("id")
       .single();
@@ -229,7 +237,7 @@ export async function getEstimatesAction(): Promise<
 
     const { data, error } = await supabase
       .from("estimates")
-      .select("id, created_at, total, notes, transcript, line_items")
+      .select("id, created_at, total, notes, transcript, line_items, client_name, client_address")
       .order("created_at", { ascending: false })
       .limit(50);
 

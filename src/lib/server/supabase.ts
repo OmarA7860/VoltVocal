@@ -10,6 +10,8 @@ type EstimateRow = {
   notes: string;
   transcript: string;
   line_items: EstimateLineItem[];
+  client_name: string;
+  client_address: string;
 };
 
 type ContractorProfileRow = {

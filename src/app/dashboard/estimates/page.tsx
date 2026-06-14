@@ -27,6 +27,8 @@ type SavedEstimate = {
   notes: string;
   transcript: string;
   line_items: EstimateResult["lineItems"];
+  client_name: string;
+  client_address: string;
 };
 
 export default function EstimatesPage() {
@@ -76,12 +78,18 @@ export default function EstimatesPage() {
       licenseNumber: profile?.license_number,
       phone: profile?.phone,
       email: profile?.email,
+      clientName: est.client_name || undefined,
+      clientAddress: est.client_address || undefined,
     });
   }
 
   const q = search.trim().toLowerCase();
   const filtered = q
-    ? estimates.filter((e) => e.transcript.toLowerCase().includes(q))
+    ? estimates.filter(
+        (e) =>
+          e.transcript.toLowerCase().includes(q) ||
+          e.client_name.toLowerCase().includes(q)
+      )
     : estimates;
 
   return (
@@ -254,6 +262,11 @@ export default function EstimatesPage() {
                           timeStyle: "short",
                         })}
                       </p>
+                      {est.client_name && (
+                        <p className="text-xs font-semibold text-[#4DB87B] mt-0.5">
+                          {est.client_name}{est.client_address ? ` · ${est.client_address}` : ""}
+                        </p>
+                      )}
                       <p className="text-sm text-[#8AA895] leading-snug line-clamp-2">
                         {est.transcript}
                       </p>
