@@ -1,14 +1,13 @@
 import Link from "next/link";
 import Image from "next/image";
 import { EstimateRecorder } from "@/components/estimate-recorder";
-import { SavedEstimates } from "@/components/saved-estimates";
 import { InstallPrompt } from "@/components/install-prompt";
 
 export default function DashboardPage() {
   return (
     <div className="flex min-h-full flex-1 flex-col bg-[#090D0B]">
       {/* Header */}
-      <header className="sticky top-0 z-30 border-b border-[#1E3025] bg-[#090D0B]/90 backdrop-blur-md">
+      <header className="hidden md:flex sticky top-0 z-30 border-b border-[#1E3025] bg-[#090D0B]/90 backdrop-blur-md">
         <div className="mx-auto flex max-w-5xl items-center gap-2 px-3 py-2.5 sm:gap-4 sm:px-6 sm:py-3">
           <div className="flex shrink-0 items-center gap-2 sm:gap-3">
             <Image
@@ -54,9 +53,9 @@ export default function DashboardPage() {
         </div>
       </header>
 
-      <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-8 px-4 py-6 sm:gap-12 sm:px-6 sm:py-10">
-        {/* Hero section heading — abbreviated on mobile */}
-        <div className="animate-fade-up">
+      <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-6 px-4 py-6 sm:gap-10 sm:px-6 sm:py-10">
+        {/* Hero section heading — hidden on mobile to save space */}
+        <div className="hidden sm:block animate-fade-up">
           <div className="mb-3 flex items-center gap-2">
             <div className="h-px flex-1 bg-gradient-to-r from-transparent via-[#2A4234] to-transparent" />
             <span className="text-[10px] font-bold tracking-[0.3em] text-[#4A6857] uppercase">
@@ -75,8 +74,6 @@ export default function DashboardPage() {
         </div>
 
         <EstimateRecorder />
-
-        <SavedEstimates />
       </main>
 
       <InstallPrompt />

@@ -18,7 +18,7 @@ const EMPTY: ContractorProfile = {
 };
 
 const inputCls =
-  "w-full rounded-xl border border-[#1E3025] bg-[#090D0B] px-3.5 py-2.5 text-sm text-[#E0EDE5] placeholder-[#2A4234] outline-none transition-all focus:border-[#3A8F5F] focus:ring-2 focus:ring-[#3A8F5F]/20";
+  "w-full rounded-xl border border-[#1E3025] bg-[#090D0B] px-3.5 py-3.5 min-h-[48px] text-sm text-[#E0EDE5] placeholder-[#2A4234] outline-none transition-all focus:border-[#3A8F5F] focus:ring-2 focus:ring-[#3A8F5F]/20";
 
 export default function SettingsPage() {
   const [form, setForm] = useState<ContractorProfile>(EMPTY);
@@ -54,7 +54,7 @@ export default function SettingsPage() {
   return (
     <div className="flex min-h-full flex-1 flex-col bg-[#090D0B]">
       {/* Header */}
-      <header className="sticky top-0 z-30 border-b border-[#1E3025] bg-[#090D0B]/90 backdrop-blur-md">
+      <header className="hidden md:flex sticky top-0 z-30 border-b border-[#1E3025] bg-[#090D0B]/90 backdrop-blur-md">
         <div className="mx-auto flex max-w-5xl items-center gap-4 px-4 py-3 sm:px-6">
           <Link href="/dashboard" className="flex items-center gap-3">
             <Image
@@ -233,7 +233,7 @@ export default function SettingsPage() {
                 <button
                   type="submit"
                   disabled={saving}
-                  className="inline-flex items-center gap-2 rounded-xl bg-[#3A8F5F] px-5 py-2.5 text-sm font-semibold text-white shadow-[0_2px_12px_rgba(58,143,95,0.3)] transition-all hover:bg-[#2E7049] hover:shadow-[0_4px_16px_rgba(58,143,95,0.4)] active:scale-95 focus:outline-none disabled:opacity-50"
+                  className="inline-flex w-full sm:w-auto min-h-[48px] items-center justify-center gap-2 rounded-xl bg-[#3A8F5F] px-5 py-2.5 text-sm font-semibold text-white shadow-[0_2px_12px_rgba(58,143,95,0.3)] transition-all hover:bg-[#2E7049] hover:shadow-[0_4px_16px_rgba(58,143,95,0.4)] active:scale-95 focus:outline-none disabled:opacity-50"
                 >
                   <Settings className="h-4 w-4 shrink-0" />
                   {saving ? "Saving…" : "Save Settings"}

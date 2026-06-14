@@ -31,7 +31,7 @@ const money = new Intl.NumberFormat("en-CA", {
 type FormState = { name: string; unit: string; unit_price: string; category: string };
 const EMPTY_FORM: FormState = { name: "", unit: "each", unit_price: "", category: "general" };
 
-const inputCls = "w-full rounded-xl border border-[#1E3025] bg-[#090D0B] px-3.5 py-2.5 text-sm text-[#E0EDE5] placeholder-[#2A4234] outline-none transition-all focus:border-[#3A8F5F] focus:ring-2 focus:ring-[#3A8F5F]/20";
+const inputCls = "w-full rounded-xl border border-[#1E3025] bg-[#090D0B] px-3.5 py-2.5 min-h-[48px] text-sm text-[#E0EDE5] placeholder-[#2A4234] outline-none transition-all focus:border-[#3A8F5F] focus:ring-2 focus:ring-[#3A8F5F]/20";
 const inlineInputCls = "rounded-lg border border-[#1E3025] bg-[#090D0B] px-2 py-1.5 text-sm text-[#E0EDE5] outline-none transition-colors focus:border-[#3A8F5F] focus:ring-1 focus:ring-[#3A8F5F]/30";
 
 export default function PricesPage() {
@@ -97,7 +97,7 @@ export default function PricesPage() {
   return (
     <div className="flex min-h-full flex-1 flex-col bg-[#090D0B]">
       {/* Header */}
-      <header className="sticky top-0 z-30 border-b border-[#1E3025] bg-[#090D0B]/90 backdrop-blur-md">
+      <header className="hidden md:flex sticky top-0 z-30 border-b border-[#1E3025] bg-[#090D0B]/90 backdrop-blur-md">
         <div className="mx-auto flex max-w-5xl items-center gap-4 px-4 py-3 sm:px-6">
           <Link href="/dashboard" className="flex items-center gap-3">
             <Image
@@ -226,7 +226,7 @@ export default function PricesPage() {
               <button
                 type="submit"
                 disabled={submitting}
-                className="inline-flex items-center gap-2 rounded-xl bg-[#3A8F5F] px-5 py-2.5 text-sm font-semibold text-white shadow-[0_2px_12px_rgba(58,143,95,0.3)] transition-all hover:bg-[#2E7049] hover:shadow-[0_4px_16px_rgba(58,143,95,0.4)] active:scale-95 focus:outline-none disabled:opacity-50"
+                className="inline-flex w-full sm:w-auto min-h-[48px] items-center justify-center gap-2 rounded-xl bg-[#3A8F5F] px-5 py-2.5 text-sm font-semibold text-white shadow-[0_2px_12px_rgba(58,143,95,0.3)] transition-all hover:bg-[#2E7049] hover:shadow-[0_4px_16px_rgba(58,143,95,0.4)] active:scale-95 focus:outline-none disabled:opacity-50"
               >
                 <Plus className="h-4 w-4 shrink-0" />
                 {submitting ? "Adding…" : "Add to Price List"}
@@ -343,11 +343,11 @@ export default function PricesPage() {
                         <td className="px-4 py-3.5">
                           <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity focus-within:opacity-100">
                             <button type="button" onClick={() => startEdit(item)} disabled={editingId !== null} title="Edit"
-                              className="inline-flex items-center justify-center rounded-md p-1.5 text-[#4A6857] transition-all hover:bg-[#1E3025] hover:text-[#4DB87B] focus:outline-none disabled:pointer-events-none">
+                              className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-md p-1.5 text-[#4A6857] transition-all hover:bg-[#1E3025] hover:text-[#4DB87B] focus:outline-none disabled:pointer-events-none">
                               <Pencil className="h-3.5 w-3.5" />
                             </button>
                             <button type="button" onClick={() => void handleDelete(item.id)} title="Delete"
-                              className="inline-flex items-center justify-center rounded-md p-1.5 text-[#4A6857] transition-all hover:bg-red-950/40 hover:text-red-400 focus:outline-none">
+                              className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-md p-1.5 text-[#4A6857] transition-all hover:bg-red-950/40 hover:text-red-400 focus:outline-none">
                               <Trash2 className="h-3.5 w-3.5" />
                             </button>
                           </div>

@@ -1,0 +1,271 @@
+"use client";
+
+import { useCallback, useEffect, useState } from "react";
+import Link from "next/link";
+import Image from "next/image";
+import { ChevronDown, Download, ListChecks, Trash2 } from "lucide-react";
+import {
+  deleteEstimateAction,
+  getEstimatesAction,
+} from "@/app/actions/estimate-actions";
+import { downloadEstimatePdf } from "@/lib/estimate-pdf";
+import { getContractorProfileAction } from "@/app/actions/settings-actions";
+import type { ContractorProfile } from "@/app/actions/settings-actions";
+import { EstimateTable } from "@/components/estimate-table";
+import type { EstimateResult } from "@/types/estimate";
+
+const money = new Intl.NumberFormat("en-CA", {
+  style: "currency",
+  currency: "CAD",
+  minimumFractionDigits: 2,
+});
+
+type SavedEstimate = {
+  id: string;
+  created_at: string;
+  total: number;
+  notes: string;
+  transcript: string;
+  line_items: EstimateResult["lineItems"];
+};
+
+export default function EstimatesPage() {
+  const [estimates, setEstimates] = useState<SavedEstimate[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [profile, setProfile] = useState<ContractorProfile | null>(null);
+
+  const fetchEstimates = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    const result = await getEstimatesAction();
+    setLoading(false);
+    if (result.ok) setEstimates(result.estimates);
+    else setError(result.error);
+  }, []);
+
+  useEffect(() => {
+    void fetchEstimates();
+    getContractorProfileAction()
+      .then((res) => {
+        if (res.ok && res.profile) setProfile(res.profile);
+      })
+      .catch(() => undefined);
+  }, [fetchEstimates]);
+
+  async function handleDelete(id: string) {
+    const result = await deleteEstimateAction(id);
+    if (result.ok) {
+      setEstimates((prev) => prev.filter((e) => e.id !== id));
+      if (expandedId === id) setExpandedId(null);
+    } else {
+      setError(result.error);
+    }
+  }
+
+  function handleDownload(est: SavedEstimate) {
+    const estimate: EstimateResult = {
+      lineItems: est.line_items,
+      total: est.total,
+      notes: est.notes,
+    };
+    downloadEstimatePdf(estimate, {
+      companyName: profile?.company_name,
+      licenseNumber: profile?.license_number,
+      phone: profile?.phone,
+      email: profile?.email,
+    });
+  }
+
+  return (
+    <div className="flex min-h-full flex-col bg-[#090D0B]">
+      {/* Desktop header — hidden on mobile */}
+      <header className="hidden md:flex sticky top-0 z-30 border-b border-[#1E3025] bg-[#090D0B]/90 backdrop-blur-md">
+        <div className="mx-auto flex w-full max-w-5xl items-center gap-4 px-4 py-3 sm:px-6">
+          <Link href="/dashboard" className="flex items-center gap-3">
+            <Image
+              src="/logo.png"
+              alt="VoltVocal"
+              width={44}
+              height={44}
+              style={{ objectFit: "contain" }}
+            />
+            <div>
+              <div className="text-sm font-bold tracking-widest text-[#E0EDE5] uppercase">
+                VoltVocal
+              </div>
+              <div className="text-[9px] tracking-[0.18em] text-[#4A6857] uppercase">
+                Field Estimating
+              </div>
+            </div>
+          </Link>
+
+          <nav className="ml-auto flex items-center gap-1">
+            <Link
+              href="/dashboard"
+              className="flex items-center gap-1.5 rounded-md px-3 py-1.5 text-[11px] font-semibold tracking-wider text-[#4A6857] uppercase transition-colors hover:bg-[#1E3025] hover:text-[#8AA895]"
+            >
+              Home
+            </Link>
+            <Link
+              href="/dashboard/estimates"
+              className="relative flex items-center gap-1.5 rounded-md px-3 py-1.5 text-[11px] font-semibold tracking-wider text-[#4DB87B] uppercase transition-colors"
+            >
+              <span className="h-1.5 w-1.5 rounded-full bg-[#4DB87B]" />
+              Estimates
+              <span className="absolute inset-0 rounded-md bg-[#3A8F5F]/10" />
+            </Link>
+            <Link
+              href="/dashboard/prices"
+              className="flex items-center gap-1.5 rounded-md px-3 py-1.5 text-[11px] font-semibold tracking-wider text-[#4A6857] uppercase transition-colors hover:bg-[#1E3025] hover:text-[#8AA895]"
+            >
+              Prices
+            </Link>
+            <Link
+              href="/dashboard/settings"
+              className="flex items-center gap-1.5 rounded-md px-3 py-1.5 text-[11px] font-semibold tracking-wider text-[#4A6857] uppercase transition-colors hover:bg-[#1E3025] hover:text-[#8AA895]"
+            >
+              Settings
+            </Link>
+          </nav>
+        </div>
+      </header>
+
+      <main className="flex w-full flex-1 flex-col">
+        {/* Section heading */}
+        <div className="flex items-center gap-2 px-4 py-4 border-b border-[#1E3025]">
+          <span className="text-[10px] font-bold tracking-widest text-[#4A6857] uppercase">
+            Saved Estimates
+          </span>
+          {estimates.length > 0 && (
+            <span className="rounded-full border border-[#1E3025] bg-[#131E17] px-2 py-0.5 text-[10px] font-bold text-[#3A8F5F] font-mono">
+              {estimates.length}
+            </span>
+          )}
+        </div>
+
+        {/* Error */}
+        {error && (
+          <div className="mx-4 mt-4 rounded-xl border border-red-900/60 bg-red-950/30 px-4 py-3">
+            <p className="text-[10px] font-bold tracking-widest text-red-400 uppercase font-mono">
+              Error
+            </p>
+            <p className="mt-1 text-sm text-red-300">{error}</p>
+          </div>
+        )}
+
+        {/* Loading */}
+        {loading && (
+          <div className="flex items-center gap-2 px-4 py-10">
+            <span
+              className="h-1.5 w-1.5 rounded-full bg-[#3A8F5F] animate-bounce"
+              style={{ animationDelay: "0s" }}
+            />
+            <span
+              className="h-1.5 w-1.5 rounded-full bg-[#3A8F5F] animate-bounce"
+              style={{ animationDelay: "0.15s" }}
+            />
+            <span
+              className="h-1.5 w-1.5 rounded-full bg-[#3A8F5F] animate-bounce"
+              style={{ animationDelay: "0.3s" }}
+            />
+            <span className="text-xs text-[#4A6857] ml-1">Loading estimates…</span>
+          </div>
+        )}
+
+        {/* Empty state */}
+        {!loading && !error && estimates.length === 0 && (
+          <div className="flex flex-1 flex-col items-center justify-center gap-4 px-6 text-center py-20">
+            <div className="h-12 w-12 rounded-full bg-[#131E17] flex items-center justify-center border border-[#1E3025]">
+              <ListChecks className="h-6 w-6 text-[#4A6857]" />
+            </div>
+            <p className="text-sm text-[#4A6857]">No estimates yet.</p>
+            <p className="text-xs text-[#2A4234]">
+              Record your first job site walkthrough.
+            </p>
+          </div>
+        )}
+
+        {/* Estimates list */}
+        {!loading &&
+          estimates.map((est) => {
+            const isExpanded = expandedId === est.id;
+            const totalWithHST = Math.round(est.total * 1.13 * 100) / 100;
+            const estimate: EstimateResult = {
+              lineItems: est.line_items,
+              total: est.total,
+              notes: est.notes,
+            };
+
+            return (
+              <div key={est.id} style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+                {/* Card header row */}
+                <div className="px-4 py-4 bg-[#090D0B]">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs text-[#4A6857] font-mono mb-1">
+                        {new Date(est.created_at).toLocaleString("en-CA", {
+                          dateStyle: "medium",
+                          timeStyle: "short",
+                        })}
+                      </p>
+                      <p className="text-sm text-[#8AA895] leading-snug line-clamp-2">
+                        {est.transcript}
+                      </p>
+                    </div>
+                    <div className="flex flex-col items-end gap-2 shrink-0">
+                      <span className="text-base font-bold font-mono tabular-nums text-[#4DB87B]">
+                        {money.format(totalWithHST)}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setExpandedId(isExpanded ? null : est.id)}
+                        className="inline-flex min-h-[36px] min-w-[36px] items-center justify-center text-[#4A6857] transition-colors hover:text-[#8AA895]"
+                        aria-label={isExpanded ? "Collapse" : "Expand"}
+                      >
+                        <ChevronDown
+                          className={`h-4 w-4 transition-transform ${isExpanded ? "rotate-180" : ""}`}
+                        />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Quick actions */}
+                  <div className="flex items-center gap-3 mt-3">
+                    <button
+                      type="button"
+                      onClick={() => handleDownload(est)}
+                      className="inline-flex min-h-[36px] items-center gap-1 text-[10px] text-[#4A6857] transition-colors hover:text-[#8AA895]"
+                    >
+                      <Download className="h-3 w-3" />
+                      Download PDF
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => void handleDelete(est.id)}
+                      className="inline-flex min-h-[36px] items-center gap-1 text-[10px] text-red-400 transition-colors hover:text-red-300"
+                    >
+                      <Trash2 className="h-3 w-3" />
+                      Delete
+                    </button>
+                  </div>
+                </div>
+
+                {/* Expanded detail */}
+                {isExpanded && (
+                  <div className="px-0 pb-2">
+                    <EstimateTable
+                      estimate={estimate}
+                      transcript={est.transcript}
+                      onDeleted={() => void handleDelete(est.id)}
+                    />
+                  </div>
+                )}
+              </div>
+            );
+          })}
+      </main>
+    </div>
+  );
+}
