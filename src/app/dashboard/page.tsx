@@ -9,43 +9,44 @@ export default function DashboardPage() {
     <div className="flex min-h-full flex-1 flex-col bg-[#090D0B]">
       {/* Header */}
       <header className="sticky top-0 z-30 border-b border-[#1E3025] bg-[#090D0B]/90 backdrop-blur-md">
-        <div className="mx-auto flex max-w-5xl items-center gap-4 px-4 py-3 sm:px-6">
-          <div className="flex items-center gap-3">
+        <div className="mx-auto flex max-w-5xl items-center gap-2 px-3 py-2.5 sm:gap-4 sm:px-6 sm:py-3">
+          <div className="flex shrink-0 items-center gap-2 sm:gap-3">
             <Image
               src="/logo.png"
               alt="VoltVocal"
-              width={44}
-              height={44}
-              style={{ objectFit: 'contain' }}
+              width={36}
+              height={36}
+              className="sm:h-11 sm:w-11"
+              style={{ objectFit: "contain" }}
             />
             <div>
-              <div className="text-sm font-bold tracking-widest text-[#E0EDE5] uppercase">
+              <div className="text-xs font-bold tracking-widest text-[#E0EDE5] uppercase sm:text-sm">
                 VoltVocal
               </div>
-              <div className="text-[9px] tracking-[0.18em] text-[#4A6857] uppercase">
+              <div className="hidden text-[9px] tracking-[0.18em] text-[#4A6857] uppercase sm:block">
                 Field Estimating
               </div>
             </div>
           </div>
 
-          <nav className="ml-auto flex items-center gap-1">
+          <nav className="ml-auto flex items-center gap-0.5 sm:gap-1">
             <Link
               href="/dashboard"
-              className="relative flex items-center gap-1.5 rounded-md px-3 py-1.5 text-[11px] font-semibold tracking-wider text-[#4DB87B] uppercase transition-colors"
+              className="relative flex min-h-[36px] items-center gap-1 rounded-md px-2 py-1.5 text-[10px] font-semibold tracking-wider text-[#4DB87B] uppercase transition-colors sm:gap-1.5 sm:px-3 sm:text-[11px]"
             >
-              <span className="h-1.5 w-1.5 rounded-full bg-[#4DB87B]" />
+              <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-[#4DB87B]" />
               Estimates
               <span className="absolute inset-0 rounded-md bg-[#3A8F5F]/10" />
             </Link>
             <Link
               href="/dashboard/prices"
-              className="flex items-center gap-1.5 rounded-md px-3 py-1.5 text-[11px] font-semibold tracking-wider text-[#4A6857] uppercase transition-colors hover:bg-[#1E3025] hover:text-[#8AA895]"
+              className="flex min-h-[36px] items-center rounded-md px-2 py-1.5 text-[10px] font-semibold tracking-wider text-[#4A6857] uppercase transition-colors hover:bg-[#1E3025] hover:text-[#8AA895] sm:px-3 sm:text-[11px]"
             >
               Prices
             </Link>
             <Link
               href="/dashboard/settings"
-              className="flex items-center gap-1.5 rounded-md px-3 py-1.5 text-[11px] font-semibold tracking-wider text-[#4A6857] uppercase transition-colors hover:bg-[#1E3025] hover:text-[#8AA895]"
+              className="flex min-h-[36px] items-center rounded-md px-2 py-1.5 text-[10px] font-semibold tracking-wider text-[#4A6857] uppercase transition-colors hover:bg-[#1E3025] hover:text-[#8AA895] sm:px-3 sm:text-[11px]"
             >
               Settings
             </Link>
@@ -53,23 +54,23 @@ export default function DashboardPage() {
         </div>
       </header>
 
-      <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col px-4 py-10 sm:px-6 gap-12">
-        {/* Hero section heading */}
+      <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-8 px-4 py-6 sm:gap-12 sm:px-6 sm:py-10">
+        {/* Hero section heading — abbreviated on mobile */}
         <div className="animate-fade-up">
-          <div className="flex items-center gap-2 mb-3">
+          <div className="mb-3 flex items-center gap-2">
             <div className="h-px flex-1 bg-gradient-to-r from-transparent via-[#2A4234] to-transparent" />
             <span className="text-[10px] font-bold tracking-[0.3em] text-[#4A6857] uppercase">
               Voice Capture
             </span>
             <div className="h-px flex-1 bg-gradient-to-r from-transparent via-[#2A4234] to-transparent" />
           </div>
-          <h1 className="text-center text-2xl font-bold tracking-tight text-[#E0EDE5] sm:text-3xl">
+          <h1 className="text-center text-xl font-bold tracking-tight text-[#E0EDE5] sm:text-3xl">
             Record. Transcribe.{" "}
             <span className="text-[#4DB87B]">Estimate.</span>
           </h1>
-          <p className="mt-2 text-center text-sm text-[#4A6857] max-w-md mx-auto">
-            Walk the job site and describe what you see. Groq Whisper transcribes the audio,
-            Llama builds structured line items instantly.
+          <p className="mx-auto mt-2 hidden max-w-md text-center text-sm text-[#4A6857] sm:block">
+            Walk the job site and describe what you see. Groq Whisper transcribes
+            the audio, Llama builds structured line items instantly.
           </p>
         </div>
 
