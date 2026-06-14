@@ -6,7 +6,8 @@ import {
   useRef,
   useState,
 } from "react";
-import { FileText, Mic, Square } from "lucide-react";
+import Image from "next/image";
+import { Square } from "lucide-react";
 import { transcribeAudioAction, generateEstimateAction } from "@/app/actions/estimate-actions";
 import { EstimateTable } from "@/components/estimate-table";
 import type { EstimateResult } from "@/types/estimate";
@@ -186,18 +187,24 @@ export function EstimateRecorder() {
           {/* ── IDLE ── */}
           {phase === "idle" && (
             <div className="animate-fade-in flex flex-col items-center gap-6">
-              {/* Big record button */}
+              {/* Logo record button */}
               <div className="relative flex items-center justify-center">
-                {/* Outer pulse ring */}
-                <span className="pulse-ring absolute h-32 w-32 rounded-full border border-[#3A8F5F]/25" />
-                <span className="pulse-ring absolute h-28 w-28 rounded-full border border-[#3A8F5F]/15" style={{ animationDelay: "0.5s" }} />
+                <span className="pulse-ring absolute h-40 w-40 rounded-2xl border border-[#3A8F5F]/20" />
+                <span className="pulse-ring absolute h-36 w-36 rounded-2xl border border-[#3A8F5F]/12" style={{ animationDelay: "0.6s" }} />
                 <button
                   type="button"
                   onClick={() => void startRecording()}
-                  className="relative flex h-24 w-24 items-center justify-center rounded-full bg-[#3A8F5F] shadow-[0_0_32px_rgba(58,143,95,0.35)] transition-all duration-300 hover:scale-105 hover:bg-[#2E7049] hover:shadow-[0_0_48px_rgba(58,143,95,0.5)] active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#4DB87B] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0E1612]"
+                  className="relative overflow-hidden rounded-2xl shadow-[0_0_40px_rgba(58,143,95,0.4)] transition-all duration-300 hover:scale-105 hover:shadow-[0_0_60px_rgba(58,143,95,0.6)] active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#4DB87B] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0E1612]"
                   aria-label="Start recording"
                 >
-                  <Mic className="h-9 w-9 text-white" strokeWidth={1.75} />
+                  <Image
+                    src="/logo.png"
+                    alt="Record"
+                    width={120}
+                    height={120}
+                    className="block"
+                    priority
+                  />
                 </button>
               </div>
               <div className="text-center">
@@ -206,26 +213,28 @@ export function EstimateRecorder() {
                   Describe materials, quantities, and any notes aloud
                 </p>
               </div>
-
             </div>
           )}
 
           {/* ── RECORDING ── */}
           {phase === "recording" && (
             <div className="animate-fade-in flex flex-col items-center gap-6">
-              {/* Waveform */}
-              <div className="flex items-center justify-center gap-0.5 h-10 w-full max-w-xs">
-                {WAVE_HEIGHTS.map((h, i) => (
-                  <div
-                    key={i}
-                    className="wave-bar w-1 bg-red-400/80 rounded-full"
-                    style={{
-                      height: `${h}%`,
-                      animationDelay: `${i * 0.035}s`,
-                      animationDuration: `${0.55 + (i % 4) * 0.12}s`,
-                    }}
+              {/* Logo with red recording ring */}
+              <div className="relative flex items-center justify-center">
+                {/* Animated red ring */}
+                <span className="absolute h-[136px] w-[136px] rounded-2xl border-2 border-red-500/70 animate-ping" style={{ animationDuration: "1.2s" }} />
+                <span className="absolute h-[136px] w-[136px] rounded-2xl border-2 border-red-500/40" />
+                <div className="relative overflow-hidden rounded-2xl shadow-[0_0_40px_rgba(239,68,68,0.35)]">
+                  <Image
+                    src="/logo.png"
+                    alt="Recording"
+                    width={120}
+                    height={120}
+                    className="block"
                   />
-                ))}
+                  {/* Red recording overlay tint */}
+                  <div className="absolute inset-0 bg-red-500/10 rounded-2xl" />
+                </div>
               </div>
 
               {/* Timer */}
@@ -237,6 +246,21 @@ export function EstimateRecorder() {
                 <span className="text-3xl font-mono font-bold tabular-nums text-[#E0EDE5]">
                   {mm}:{ss}
                 </span>
+              </div>
+
+              {/* Waveform */}
+              <div className="flex items-center justify-center gap-0.5 h-8 w-full max-w-xs">
+                {WAVE_HEIGHTS.map((h, i) => (
+                  <div
+                    key={i}
+                    className="wave-bar w-1 bg-red-400/70 rounded-full"
+                    style={{
+                      height: `${h}%`,
+                      animationDelay: `${i * 0.035}s`,
+                      animationDuration: `${0.55 + (i % 4) * 0.12}s`,
+                    }}
+                  />
+                ))}
               </div>
 
               {/* Stop button */}
@@ -254,19 +278,21 @@ export function EstimateRecorder() {
           {/* ── TRANSCRIBING ── */}
           {phase === "transcribing" && (
             <div className="animate-fade-in flex flex-col items-center gap-5 py-2">
-              <div className="relative flex h-16 w-16 items-center justify-center rounded-full bg-[#131E17] ring-1 ring-[#2A4234]">
-                <svg className="absolute h-16 w-16 -rotate-90" viewBox="0 0 56 56">
-                  <circle cx="28" cy="28" r="24" fill="none" stroke="#1E3025" strokeWidth="2" />
-                  <circle
-                    cx="28" cy="28" r="24" fill="none"
-                    stroke="#3A8F5F" strokeWidth="2"
-                    strokeDasharray="150.8"
-                    strokeDashoffset="37.7"
+              <div className="relative flex items-center justify-center">
+                {/* Spinning arc around logo */}
+                <svg className="absolute h-[136px] w-[136px] -rotate-90" viewBox="0 0 136 136">
+                  <rect x="4" y="4" width="128" height="128" rx="16" fill="none" stroke="#1E3025" strokeWidth="2" />
+                  <rect x="4" y="4" width="128" height="128" rx="16" fill="none"
+                    stroke="#3A8F5F" strokeWidth="2.5"
+                    strokeDasharray="480"
+                    strokeDashoffset="360"
                     strokeLinecap="round"
                     style={{ animation: "spin 1.4s linear infinite" }}
                   />
                 </svg>
-                <Mic className="h-6 w-6 text-[#4DB87B]" />
+                <div className="overflow-hidden rounded-2xl opacity-70">
+                  <Image src="/logo.png" alt="Transcribing" width={120} height={120} className="block" />
+                </div>
               </div>
               <div className="text-center">
                 <p className="text-sm font-bold text-[#E0EDE5]">Transcribing audio…</p>
@@ -283,19 +309,20 @@ export function EstimateRecorder() {
           {/* ── GENERATING ── */}
           {phase === "generating" && (
             <div className="animate-fade-in flex flex-col items-center gap-5 py-2">
-              <div className="relative flex h-16 w-16 items-center justify-center rounded-full bg-[#131E17] ring-1 ring-[#2A4234]">
-                <svg className="absolute h-16 w-16 -rotate-90" viewBox="0 0 56 56">
-                  <circle cx="28" cy="28" r="24" fill="none" stroke="#1E3025" strokeWidth="2" />
-                  <circle
-                    cx="28" cy="28" r="24" fill="none"
-                    stroke="#4DB87B" strokeWidth="2"
-                    strokeDasharray="150.8"
-                    strokeDashoffset="75.4"
+              <div className="relative flex items-center justify-center">
+                <svg className="absolute h-[136px] w-[136px] -rotate-90" viewBox="0 0 136 136">
+                  <rect x="4" y="4" width="128" height="128" rx="16" fill="none" stroke="#1E3025" strokeWidth="2" />
+                  <rect x="4" y="4" width="128" height="128" rx="16" fill="none"
+                    stroke="#4DB87B" strokeWidth="2.5"
+                    strokeDasharray="480"
+                    strokeDashoffset="240"
                     strokeLinecap="round"
                     style={{ animation: "spin 1s linear infinite" }}
                   />
                 </svg>
-                <FileText className="h-6 w-6 text-[#4DB87B]" />
+                <div className="overflow-hidden rounded-2xl opacity-70">
+                  <Image src="/logo.png" alt="Generating" width={120} height={120} className="block" />
+                </div>
               </div>
               <div className="text-center">
                 <p className="text-sm font-bold text-[#E0EDE5]">Building estimate…</p>
