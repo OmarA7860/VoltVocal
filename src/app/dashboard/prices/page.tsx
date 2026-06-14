@@ -269,7 +269,93 @@ export default function PricesPage() {
               </div>
             </div>
           ) : (
-            <div className="overflow-x-auto">
+            <>
+            {/* ── Mobile card list ── */}
+            <div className="md:hidden divide-y divide-[#1A2820]">
+              {items.map((item) => {
+                const isEditing = editingId === item.id;
+                const catColor = CATEGORY_COLORS[item.category] ?? CATEGORY_COLORS.general;
+
+                if (isEditing && editDraft) {
+                  return (
+                    <div key={item.id} className="px-4 py-4 bg-[#3A8F5F]/5 ring-1 ring-inset ring-[#3A8F5F]/30">
+                      <div className="flex flex-col gap-2">
+                        <div>
+                          <label className="mb-1 block text-[10px] font-bold tracking-widest text-[#4A6857] uppercase">Name</label>
+                          <input type="text" value={editDraft.name} maxLength={200} autoFocus
+                            onChange={(e) => setEditDraft((d) => d && { ...d, name: e.target.value })}
+                            className={`w-full ${inlineInputCls}`} />
+                        </div>
+                        <div className="grid grid-cols-2 gap-2">
+                          <div>
+                            <label className="mb-1 block text-[10px] font-bold tracking-widest text-[#4A6857] uppercase">Unit</label>
+                            <input type="text" value={editDraft.unit} maxLength={50}
+                              onChange={(e) => setEditDraft((d) => d && { ...d, unit: e.target.value })}
+                              className={`w-full ${inlineInputCls}`} />
+                          </div>
+                          <div>
+                            <label className="mb-1 block text-[10px] font-bold tracking-widest text-[#4A6857] uppercase">Price ($)</label>
+                            <input type="number" inputMode="decimal" value={editDraft.unit_price} min="0" max="99999" step="0.01"
+                              onChange={(e) => setEditDraft((d) => d && { ...d, unit_price: e.target.value })}
+                              className={`w-full text-right font-mono ${inlineInputCls}`} />
+                          </div>
+                        </div>
+                        <div>
+                          <label className="mb-1 block text-[10px] font-bold tracking-widest text-[#4A6857] uppercase">Category</label>
+                          <select value={editDraft.category}
+                            onChange={(e) => setEditDraft((d) => d && { ...d, category: e.target.value })}
+                            className={`w-full capitalize ${inlineInputCls}`}>
+                            {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
+                          </select>
+                        </div>
+                        <div className="flex gap-2 pt-1">
+                          <button type="button" onClick={() => void commitEdit()} disabled={saving}
+                            className="flex-1 inline-flex min-h-[44px] items-center justify-center gap-1.5 rounded-xl bg-[#3A8F5F] text-sm font-semibold text-white transition-all hover:bg-[#2E7049] disabled:opacity-50">
+                            <Check className="h-4 w-4" /> Save
+                          </button>
+                          <button type="button" onClick={cancelEdit}
+                            className="flex-1 inline-flex min-h-[44px] items-center justify-center gap-1.5 rounded-xl border border-[#2A4234] text-sm font-semibold text-[#8AA895] transition-all hover:border-[#4A6857]">
+                            <X className="h-4 w-4" /> Cancel
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                }
+
+                return (
+                  <div key={item.id} className="px-4 py-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-[#E0EDE5] leading-snug">{item.name}</p>
+                        <div className="mt-1.5 flex items-center gap-2 flex-wrap">
+                          <span className={`inline-flex items-center rounded-md border px-2 py-0.5 text-[10px] font-bold tracking-wider uppercase font-mono ${catColor}`}>
+                            {item.category}
+                          </span>
+                          <span className="text-xs text-[#4A6857]">per {item.unit}</span>
+                        </div>
+                      </div>
+                      <span className="text-base font-bold font-mono tabular-nums text-[#E0EDE5] shrink-0">
+                        {money.format(item.unit_price)}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2 mt-3">
+                      <button type="button" onClick={() => startEdit(item)} disabled={editingId !== null}
+                        className="inline-flex min-h-[40px] flex-1 items-center justify-center gap-1.5 rounded-xl border border-[#1E3025] bg-[#131E17] text-xs font-semibold text-[#8AA895] transition-all hover:border-[#3A8F5F] hover:text-[#4DB87B] disabled:opacity-40">
+                        <Pencil className="h-3.5 w-3.5" /> Edit
+                      </button>
+                      <button type="button" onClick={() => void handleDelete(item.id)}
+                        className="inline-flex min-h-[40px] flex-1 items-center justify-center gap-1.5 rounded-xl border border-[#1E3025] bg-[#131E17] text-xs font-semibold text-red-400 transition-all hover:border-red-800/50 hover:bg-red-950/20">
+                        <Trash2 className="h-3.5 w-3.5" /> Delete
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* ── Desktop table ── */}
+            <div className="hidden md:block overflow-x-auto">
               <table className="w-full min-w-[580px] border-collapse text-left text-sm">
                 <thead>
                   <tr className="border-b border-[#1E3025] bg-[#0B1210]/40 text-[10px] font-bold tracking-[0.2em] uppercase text-[#4A6857] font-mono">
@@ -358,6 +444,7 @@ export default function PricesPage() {
                 </tbody>
               </table>
             </div>
+            </>
           )}
         </div>
       </main>

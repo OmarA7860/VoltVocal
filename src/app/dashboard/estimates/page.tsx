@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { ChevronDown, Download, ListChecks, Trash2 } from "lucide-react";
+import { ChevronDown, Download, ListChecks, Search, Trash2, X } from "lucide-react";
 import {
   deleteEstimateAction,
   getEstimatesAction,
@@ -35,6 +35,7 @@ export default function EstimatesPage() {
   const [error, setError] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [profile, setProfile] = useState<ContractorProfile | null>(null);
+  const [search, setSearch] = useState("");
 
   const fetchEstimates = useCallback(async () => {
     setLoading(true);
@@ -77,6 +78,11 @@ export default function EstimatesPage() {
       email: profile?.email,
     });
   }
+
+  const q = search.trim().toLowerCase();
+  const filtered = q
+    ? estimates.filter((e) => e.transcript.toLowerCase().includes(q))
+    : estimates;
 
   return (
     <div className="flex min-h-full flex-col bg-[#090D0B]">
@@ -133,15 +139,39 @@ export default function EstimatesPage() {
       </header>
 
       <main className="flex w-full flex-1 flex-col">
-        {/* Section heading */}
-        <div className="flex items-center gap-2 px-4 py-4 border-b border-[#1E3025]">
-          <span className="text-[10px] font-bold tracking-widest text-[#4A6857] uppercase">
-            Saved Estimates
-          </span>
-          {estimates.length > 0 && (
-            <span className="rounded-full border border-[#1E3025] bg-[#131E17] px-2 py-0.5 text-[10px] font-bold text-[#3A8F5F] font-mono">
-              {estimates.length}
+        {/* Section heading + search */}
+        <div className="border-b border-[#1E3025]">
+          <div className="flex items-center gap-2 px-4 pt-4 pb-3">
+            <span className="text-[10px] font-bold tracking-widest text-[#4A6857] uppercase">
+              Saved Estimates
             </span>
+            {estimates.length > 0 && (
+              <span className="rounded-full border border-[#1E3025] bg-[#131E17] px-2 py-0.5 text-[10px] font-bold text-[#3A8F5F] font-mono">
+                {q ? `${filtered.length} / ${estimates.length}` : estimates.length}
+              </span>
+            )}
+          </div>
+          {!loading && estimates.length > 0 && (
+            <div className="relative px-4 pb-3">
+              <Search className="pointer-events-none absolute left-7 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-[#4A6857]" />
+              <input
+                type="text"
+                placeholder="Search estimates…"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="w-full rounded-lg border border-[#1E3025] bg-[#0E1612] py-2.5 pl-8 pr-8 text-sm text-[#E0EDE5] placeholder-[#4A6857] outline-none transition-colors focus:border-[#3A8F5F] focus:ring-1 focus:ring-[#3A8F5F]/30"
+              />
+              {search && (
+                <button
+                  type="button"
+                  onClick={() => setSearch("")}
+                  className="absolute right-7 top-1/2 -translate-y-1/2 p-1 text-[#4A6857] hover:text-[#8AA895]"
+                  aria-label="Clear search"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              )}
+            </div>
           )}
         </div>
 
@@ -187,9 +217,23 @@ export default function EstimatesPage() {
           </div>
         )}
 
+        {/* No search results */}
+        {!loading && !error && q && filtered.length === 0 && estimates.length > 0 && (
+          <div className="flex flex-col items-center gap-2 px-6 py-16 text-center">
+            <p className="text-sm text-[#4A6857]">No estimates match &ldquo;{search}&rdquo;</p>
+            <button
+              type="button"
+              onClick={() => setSearch("")}
+              className="text-xs text-[#3A8F5F] hover:text-[#4DB87B] transition-colors"
+            >
+              Clear search
+            </button>
+          </div>
+        )}
+
         {/* Estimates list */}
         {!loading &&
-          estimates.map((est) => {
+          filtered.map((est) => {
             const isExpanded = expandedId === est.id;
             const totalWithHST = Math.round(est.total * 1.13 * 100) / 100;
             const estimate: EstimateResult = {
