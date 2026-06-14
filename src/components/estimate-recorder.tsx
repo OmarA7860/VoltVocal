@@ -6,7 +6,7 @@ import {
   useRef,
   useState,
 } from "react";
-import { FileText, Mic, Square } from "lucide-react";
+import { FileText, Mic, Square, Zap } from "lucide-react";
 import { transcribeAudioAction, generateEstimateAction } from "@/app/actions/estimate-actions";
 import { EstimateTable } from "@/components/estimate-table";
 import type { EstimateResult } from "@/types/estimate";
@@ -19,6 +19,16 @@ export type PipelinePhase =
 
 // Fixed waveform heights (deterministic — avoids hydration mismatch)
 const WAVE_HEIGHTS = [35, 65, 48, 88, 55, 78, 42, 95, 52, 72, 38, 82, 60, 44, 90, 50, 68, 33, 75, 58];
+
+const DEMO_TRANSCRIPT =
+  "Alright, I'm at 245 King Street West, main floor kitchen reno. Starting at the panel — " +
+  "adding a 20-amp dedicated circuit for the dishwasher and another 20-amp for the built-in microwave, " +
+  "two new breakers in the existing 200-amp panel. For the ceiling, 8 LED pot lights on a dimmer, " +
+  "running new 14-2 wire from the switch location. Three new counter receptacles along the backsplash, " +
+  "all GFCI protected, split across two circuits per code. One new 240-volt outlet for the electric range " +
+  "at the back wall, 6-2 wire and a 40-amp breaker. Exhaust fan rough-in above the stove. " +
+  "Labor estimate is 8 hours for the rough-in. All work today is rough-in only, no fixtures supplied. " +
+  "Permit has already been pulled.";
 
 function pickMimeType(): string | undefined {
   if (typeof MediaRecorder === "undefined") return undefined;
@@ -146,6 +156,22 @@ export function EstimateRecorder() {
     }
   }, [cleanupStream, stopTimer]);
 
+  const runDemo = useCallback(async () => {
+    setError(null);
+    setEstimate(null);
+    setTranscript(null);
+    try {
+      setPhase("generating");
+      const result = await postEstimate(DEMO_TRANSCRIPT);
+      setTranscript(DEMO_TRANSCRIPT);
+      setEstimate(result);
+      setPhase("idle");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Something went wrong.");
+      setPhase("idle");
+    }
+  }, []);
+
   const busy = phase === "transcribing" || phase === "generating";
   const mm = String(Math.floor(elapsedSec / 60)).padStart(2, "0");
   const ss = String(elapsedSec % 60).padStart(2, "0");
@@ -205,6 +231,24 @@ export function EstimateRecorder() {
                   Describe materials, quantities, and any notes aloud
                 </p>
               </div>
+
+              {/* Demo divider */}
+              <div className="flex w-full max-w-xs items-center gap-3">
+                <div className="h-px flex-1 bg-[#1E3025]" />
+                <span className="text-[10px] font-bold tracking-widest text-[#2A4234] uppercase">or</span>
+                <div className="h-px flex-1 bg-[#1E3025]" />
+              </div>
+
+              {/* Demo button */}
+              <button
+                type="button"
+                onClick={() => void runDemo()}
+                disabled={busy}
+                className="flex items-center gap-2 rounded-xl border border-[#2A4234] bg-[#131E17] px-5 py-2.5 text-xs font-semibold tracking-wide text-[#8AA895] transition-all hover:border-[#3A8F5F] hover:text-[#4DB87B] active:scale-95 focus:outline-none disabled:opacity-40"
+              >
+                <Zap className="h-3.5 w-3.5" />
+                Try Demo — no mic needed
+              </button>
             </div>
           )}
 
