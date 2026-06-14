@@ -122,3 +122,52 @@ a {
 .pb-safe {
   padding-bottom: env(safe-area-inset-bottom);
 }
+
+.record-btn {
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  background-color: #3A8F5F;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.record-btn:hover {
+  transform: scale(1.05);
+  box-shadow:
+    0 0 0 8px rgba(58, 143, 95, 0.2),
+    0 0 0 16px rgba(58, 143, 95, 0.1),
+    0 0 30px rgba(58, 143, 95, 0.3);
+}
+
+.record-btn:active {
+  transform: scale(0.97);
+}
+
+.record-btn:focus {
+  outline: none;
+}
+
+.record-btn-pulse {
+  animation: recordPulse 1.5s ease-in-out infinite alternate;
+}
+
+@keyframes recordPulse {
+  from {
+    box-shadow:
+      0 0 0 4px rgba(58, 143, 95, 0.15),
+      0 0 0 8px rgba(58, 143, 95, 0.08),
+      0 0 20px rgba(58, 143, 95, 0.2);
+  }
+  to {
+    box-shadow:
+      0 0 0 10px rgba(58, 143, 95, 0.3),
+      0 0 0 20px rgba(58, 143, 95, 0.12),
+      0 0 45px rgba(58, 143, 95, 0.45);
+  }
+}

@@ -187,22 +187,28 @@ export function EstimateRecorder() {
           {/* ── IDLE ── */}
           {phase === "idle" && (
             <div className="animate-fade-in flex flex-col items-center gap-6">
-              {/* Logo record button */}
               <div className="relative flex items-center justify-center">
-                <span className="pulse-ring absolute h-40 w-40 rounded-2xl border border-[#3A8F5F]/20" />
-                <span className="pulse-ring absolute h-36 w-36 rounded-2xl border border-[#3A8F5F]/12" style={{ animationDelay: "0.6s" }} />
+                {/* Radial background glow */}
+                <div
+                  className="pointer-events-none absolute"
+                  style={{
+                    width: 300,
+                    height: 300,
+                    background: "radial-gradient(circle, rgba(58,143,95,0.08) 0%, transparent 70%)",
+                  }}
+                />
                 <button
                   type="button"
                   onClick={() => void startRecording()}
-                  className="relative overflow-hidden rounded-2xl shadow-[0_0_40px_rgba(58,143,95,0.4)] transition-all duration-300 hover:scale-105 hover:shadow-[0_0_60px_rgba(58,143,95,0.6)] active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#4DB87B] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0E1612]"
+                  className="record-btn"
                   aria-label="Start recording"
                 >
                   <Image
                     src="/logo.png"
                     alt="Record"
-                    width={120}
-                    height={120}
-                    className="block"
+                    width={48}
+                    height={48}
+                    style={{ objectFit: "contain" }}
                     priority
                   />
                 </button>
@@ -219,21 +225,24 @@ export function EstimateRecorder() {
           {/* ── RECORDING ── */}
           {phase === "recording" && (
             <div className="animate-fade-in flex flex-col items-center gap-6">
-              {/* Logo with red recording ring */}
+              {/* Pulsing logo button */}
               <div className="relative flex items-center justify-center">
-                {/* Animated red ring */}
-                <span className="absolute h-[136px] w-[136px] rounded-2xl border-2 border-red-500/70 animate-ping" style={{ animationDuration: "1.2s" }} />
-                <span className="absolute h-[136px] w-[136px] rounded-2xl border-2 border-red-500/40" />
-                <div className="relative overflow-hidden rounded-2xl shadow-[0_0_40px_rgba(239,68,68,0.35)]">
+                <div
+                  className="pointer-events-none absolute"
+                  style={{
+                    width: 300,
+                    height: 300,
+                    background: "radial-gradient(circle, rgba(58,143,95,0.08) 0%, transparent 70%)",
+                  }}
+                />
+                <div className="record-btn record-btn-pulse">
                   <Image
                     src="/logo.png"
                     alt="Recording"
-                    width={120}
-                    height={120}
-                    className="block"
+                    width={48}
+                    height={48}
+                    style={{ objectFit: "contain" }}
                   />
-                  {/* Red recording overlay tint */}
-                  <div className="absolute inset-0 bg-red-500/10 rounded-2xl" />
                 </div>
               </div>
 
@@ -279,19 +288,14 @@ export function EstimateRecorder() {
           {phase === "transcribing" && (
             <div className="animate-fade-in flex flex-col items-center gap-5 py-2">
               <div className="relative flex items-center justify-center">
-                {/* Spinning arc around logo */}
-                <svg className="absolute h-[136px] w-[136px] -rotate-90" viewBox="0 0 136 136">
-                  <rect x="4" y="4" width="128" height="128" rx="16" fill="none" stroke="#1E3025" strokeWidth="2" />
-                  <rect x="4" y="4" width="128" height="128" rx="16" fill="none"
-                    stroke="#3A8F5F" strokeWidth="2.5"
-                    strokeDasharray="480"
-                    strokeDashoffset="360"
-                    strokeLinecap="round"
-                    style={{ animation: "spin 1.4s linear infinite" }}
-                  />
+                {/* Spinning ring around circle */}
+                <svg className="absolute h-[116px] w-[116px] -rotate-90" viewBox="0 0 116 116" style={{ animation: "spin 1.4s linear infinite" }}>
+                  <circle cx="58" cy="58" r="54" fill="none" stroke="#1E3025" strokeWidth="2" />
+                  <circle cx="58" cy="58" r="54" fill="none" stroke="#3A8F5F" strokeWidth="2.5"
+                    strokeDasharray="339" strokeDashoffset="254" strokeLinecap="round" />
                 </svg>
-                <div className="overflow-hidden rounded-2xl opacity-70">
-                  <Image src="/logo.png" alt="Transcribing" width={120} height={120} className="block" />
+                <div className="record-btn opacity-70" style={{ pointerEvents: "none" }}>
+                  <Image src="/logo.png" alt="Transcribing" width={48} height={48} style={{ objectFit: "contain" }} />
                 </div>
               </div>
               <div className="text-center">
@@ -310,18 +314,13 @@ export function EstimateRecorder() {
           {phase === "generating" && (
             <div className="animate-fade-in flex flex-col items-center gap-5 py-2">
               <div className="relative flex items-center justify-center">
-                <svg className="absolute h-[136px] w-[136px] -rotate-90" viewBox="0 0 136 136">
-                  <rect x="4" y="4" width="128" height="128" rx="16" fill="none" stroke="#1E3025" strokeWidth="2" />
-                  <rect x="4" y="4" width="128" height="128" rx="16" fill="none"
-                    stroke="#4DB87B" strokeWidth="2.5"
-                    strokeDasharray="480"
-                    strokeDashoffset="240"
-                    strokeLinecap="round"
-                    style={{ animation: "spin 1s linear infinite" }}
-                  />
+                <svg className="absolute h-[116px] w-[116px] -rotate-90" viewBox="0 0 116 116" style={{ animation: "spin 1s linear infinite" }}>
+                  <circle cx="58" cy="58" r="54" fill="none" stroke="#1E3025" strokeWidth="2" />
+                  <circle cx="58" cy="58" r="54" fill="none" stroke="#4DB87B" strokeWidth="2.5"
+                    strokeDasharray="339" strokeDashoffset="169" strokeLinecap="round" />
                 </svg>
-                <div className="overflow-hidden rounded-2xl opacity-70">
-                  <Image src="/logo.png" alt="Generating" width={120} height={120} className="block" />
+                <div className="record-btn opacity-70" style={{ pointerEvents: "none" }}>
+                  <Image src="/logo.png" alt="Generating" width={48} height={48} style={{ objectFit: "contain" }} />
                 </div>
               </div>
               <div className="text-center">
