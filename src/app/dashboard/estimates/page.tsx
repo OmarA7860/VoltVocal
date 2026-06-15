@@ -140,7 +140,10 @@ export default function EstimatesPage() {
       ...(profile?.license_number ? [`Lic: ${profile.license_number}`] : []),
     ];
 
-    window.open(`mailto:?subject=${subject}&body=${encodeURIComponent(bodyParts.join("\n"))}`);
+    window.open(
+      `https://mail.google.com/mail/?view=cm&fs=1&su=${subject}&body=${encodeURIComponent(bodyParts.join("\n"))}`,
+      "_blank",
+    );
   }
 
   const q = search.trim().toLowerCase();
