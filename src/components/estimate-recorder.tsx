@@ -197,8 +197,8 @@ export function EstimateRecorder() {
                 <Image
                   src="/logo-mark.png"
                   alt="Record"
-                  width={88}
-                  height={88}
+                  width={100}
+                  height={100}
                   style={{ objectFit: "contain", filter: "brightness(0) invert(1)" }}
                   priority
                 />
@@ -220,8 +220,8 @@ export function EstimateRecorder() {
                 <Image
                   src="/logo-mark.png"
                   alt="Recording"
-                  width={88}
-                  height={88}
+                  width={100}
+                  height={100}
                   style={{ objectFit: "contain", filter: "brightness(0) invert(1)" }}
                 />
               </div>
