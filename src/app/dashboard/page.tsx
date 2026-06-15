@@ -33,8 +33,14 @@ export default function DashboardPage() {
               className="relative flex min-h-[36px] items-center gap-1 rounded-md px-2 py-1.5 text-[10px] font-semibold tracking-wider text-[#4DB87B] uppercase transition-colors sm:gap-1.5 sm:px-3 sm:text-[11px]"
             >
               <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-[#4DB87B]" />
-              Estimates
+              Home
               <span className="absolute inset-0 rounded-md bg-[#3A8F5F]/10" />
+            </Link>
+            <Link
+              href="/dashboard/estimates"
+              className="flex min-h-[36px] items-center rounded-md px-2 py-1.5 text-[10px] font-semibold tracking-wider text-[#4A6857] uppercase transition-colors hover:bg-[#1E3025] hover:text-[#8AA895] sm:px-3 sm:text-[11px]"
+            >
+              Estimates
             </Link>
             <Link
               href="/dashboard/prices"
