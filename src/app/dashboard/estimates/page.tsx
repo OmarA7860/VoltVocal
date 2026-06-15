@@ -3,10 +3,11 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { ChevronDown, Download, ListChecks, Search, Trash2, X } from "lucide-react";
+import { ChevronDown, Download, ListChecks, Mail, Search, Trash2, X } from "lucide-react";
 import {
   deleteEstimateAction,
   getEstimatesAction,
+  updateEstimateStatusAction,
 } from "@/app/actions/estimate-actions";
 import { downloadEstimatePdf } from "@/lib/estimate-pdf";
 import { getContractorProfileAction } from "@/app/actions/settings-actions";
@@ -29,6 +30,17 @@ type SavedEstimate = {
   line_items: EstimateResult["lineItems"];
   client_name: string;
   client_address: string;
+  status: string;
+};
+
+const STATUS_ORDER = ["pending", "sent", "accepted", "declined"] as const;
+type EstimateStatus = typeof STATUS_ORDER[number];
+
+const STATUS_STYLES: Record<EstimateStatus, string> = {
+  pending:  "text-amber-400 border-amber-700/50 bg-amber-950/40",
+  sent:     "text-sky-400 border-sky-700/50 bg-sky-950/40",
+  accepted: "text-[#4DB87B] border-[#3A8F5F]/40 bg-[#3A8F5F]/10",
+  declined: "text-red-400 border-red-700/50 bg-red-950/40",
 };
 
 export default function EstimatesPage() {
@@ -81,6 +93,54 @@ export default function EstimatesPage() {
       clientName: est.client_name || undefined,
       clientAddress: est.client_address || undefined,
     });
+  }
+
+  async function handleStatusChange(id: string, current: string) {
+    const idx = STATUS_ORDER.indexOf(current as EstimateStatus);
+    const next = STATUS_ORDER[(idx + 1) % STATUS_ORDER.length];
+    const result = await updateEstimateStatusAction(id, next);
+    if (result.ok) {
+      setEstimates((prev) => prev.map((e) => e.id === id ? { ...e, status: next } : e));
+    }
+  }
+
+  function handleEmail(est: SavedEstimate) {
+    const totalWithHST = Math.round(est.total * 1.13 * 100) / 100;
+    const hst = Math.round(est.total * 0.13 * 100) / 100;
+    const date = new Date(est.created_at).toLocaleDateString("en-CA", { dateStyle: "long" });
+    const company = profile?.company_name ?? "Your Contractor";
+
+    const subject = encodeURIComponent(`Estimate from ${company} — ${date}`);
+
+    const itemLines = est.line_items
+      .map((i) => `  • ${i.description}: ${i.quantity} ${i.unit} × $${i.unitPrice.toFixed(2)} = $${i.lineTotal.toFixed(2)}`)
+      .join("\n");
+
+    const bodyParts = [
+      `Hi,`,
+      ``,
+      `Please find your estimate below.`,
+      ``,
+      ...(est.client_name ? [`Client: ${est.client_name}${est.client_address ? ` — ${est.client_address}` : ""}`] : []),
+      `Date: ${date}`,
+      ``,
+      `ITEMS`,
+      `─────────────────────`,
+      itemLines,
+      ``,
+      `Subtotal:  ${money.format(est.total)}`,
+      `HST (13%): ${money.format(hst)}`,
+      `Total:     ${money.format(totalWithHST)}`,
+      ...(est.notes?.trim() ? [``, `Notes: ${est.notes}`] : []),
+      ``,
+      `─────────────────────`,
+      company,
+      ...(profile?.phone ? [profile.phone] : []),
+      ...(profile?.email ? [profile.email] : []),
+      ...(profile?.license_number ? [`Lic: ${profile.license_number}`] : []),
+    ];
+
+    window.open(`mailto:?subject=${subject}&body=${encodeURIComponent(bodyParts.join("\n"))}`);
   }
 
   const q = search.trim().toLowerCase();
@@ -277,6 +337,14 @@ export default function EstimatesPage() {
                       </span>
                       <button
                         type="button"
+                        onClick={() => void handleStatusChange(est.id, est.status)}
+                        title="Tap to change status"
+                        className={`inline-flex items-center rounded-md border px-2 py-0.5 text-[10px] font-bold tracking-wider uppercase font-mono transition-all active:scale-95 ${STATUS_STYLES[est.status as EstimateStatus] ?? STATUS_STYLES.pending}`}
+                      >
+                        {est.status}
+                      </button>
+                      <button
+                        type="button"
                         onClick={() => setExpandedId(isExpanded ? null : est.id)}
                         className="inline-flex min-h-[36px] min-w-[36px] items-center justify-center text-[#4A6857] transition-colors hover:text-[#8AA895]"
                         aria-label={isExpanded ? "Collapse" : "Expand"}
@@ -296,7 +364,15 @@ export default function EstimatesPage() {
                       className="inline-flex min-h-[36px] items-center gap-1 text-[10px] text-[#4A6857] transition-colors hover:text-[#8AA895]"
                     >
                       <Download className="h-3 w-3" />
-                      Download PDF
+                      PDF
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleEmail(est)}
+                      className="inline-flex min-h-[36px] items-center gap-1 text-[10px] text-[#4A6857] transition-colors hover:text-[#8AA895]"
+                    >
+                      <Mail className="h-3 w-3" />
+                      Email
                     </button>
                     <button
                       type="button"

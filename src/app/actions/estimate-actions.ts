@@ -25,6 +25,7 @@ type SavedEstimate = {
   line_items: EstimateResult["lineItems"];
   client_name: string;
   client_address: string;
+  status: string;
 };
 
 async function rateLimitKey(prefix: string): Promise<string> {
@@ -182,6 +183,7 @@ export async function saveEstimateAction(
         line_items: validatedLineItems,
         client_name: validatedClientName,
         client_address: validatedClientAddress,
+        status: "pending",
       })
       .select("id")
       .single();
@@ -237,12 +239,46 @@ export async function getEstimatesAction(): Promise<
 
     const { data, error } = await supabase
       .from("estimates")
-      .select("id, created_at, total, notes, transcript, line_items, client_name, client_address")
+      .select("id, created_at, total, notes, transcript, line_items, client_name, client_address, status")
       .order("created_at", { ascending: false })
       .limit(50);
 
     if (error) throw new Error("DB_FETCH_FAILED");
     return { ok: true, estimates: data ?? [] };
+  } catch (e) {
+    return { ok: false, error: mapError(e) };
+  }
+}
+
+const VALID_STATUSES = ["pending", "sent", "accepted", "declined"] as const;
+
+export async function updateEstimateStatusAction(
+  id: string,
+  status: string,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  try {
+    if (!id || typeof id !== "string" || !UUID_RE.test(id)) {
+      return { ok: false, error: "Invalid estimate ID." };
+    }
+    if (!VALID_STATUSES.includes(status as typeof VALID_STATUSES[number])) {
+      return { ok: false, error: "Invalid status." };
+    }
+
+    const key = await rateLimitKey("upd");
+    if (!checkRateLimit(key)) {
+      return { ok: false, error: "Too many requests. Please wait a few minutes." };
+    }
+
+    const { getSupabaseClient } = await import("@/lib/server/supabase");
+    const supabase = getSupabaseClient();
+
+    const { error } = await supabase
+      .from("estimates")
+      .update({ status })
+      .eq("id", id);
+
+    if (error) throw new Error("DB_INSERT_FAILED");
+    return { ok: true };
   } catch (e) {
     return { ok: false, error: mapError(e) };
   }

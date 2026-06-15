@@ -12,6 +12,7 @@ type EstimateRow = {
   line_items: EstimateLineItem[];
   client_name: string;
   client_address: string;
+  status: string;
 };
 
 type ContractorProfileRow = {
