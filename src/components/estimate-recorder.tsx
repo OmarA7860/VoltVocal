@@ -156,8 +156,7 @@ export function EstimateRecorder() {
     <div className="flex w-full flex-col gap-6">
       {/* Main control card */}
       <div
-        className="w-full overflow-hidden rounded-2xl shadow-[0_8px_32px_rgba(0,0,0,0.4)]"
-        style={{ background: "rgba(58,143,95,0.03)", border: "1px solid rgba(58,143,95,0.2)" }}
+        className="w-full overflow-hidden rounded-2xl shadow-[0_8px_32px_rgba(0,0,0,0.4)] border border-[#3A8F5F]/20 bg-[#0E1612]"
         aria-live="polite"
       >
         {/* Status bar */}

@@ -150,7 +150,7 @@ export default function EstimatesPage() {
         {/* Section heading + search */}
         <div className="border-b border-[#1E3025]">
           <div className="flex items-center gap-2 px-4 pt-4 pb-3">
-            <span className="text-[10px] font-bold tracking-widest text-[#4A6857] uppercase">
+            <span className="text-[11px] font-bold tracking-[0.2em] text-[#4A6857] uppercase">
               Saved Estimates
             </span>
             {estimates.length > 0 && (
@@ -251,7 +251,7 @@ export default function EstimatesPage() {
             };
 
             return (
-              <div key={est.id} style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+              <div key={est.id} className="border-b border-white/[0.06]">
                 {/* Card header row */}
                 <div className="px-4 py-4 bg-[#090D0B]">
                   <div className="flex items-start justify-between gap-3">

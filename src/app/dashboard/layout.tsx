@@ -6,8 +6,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     <div className="flex min-h-full flex-col">
       {/* Mobile mini header — hidden on desktop */}
       <header
-        className="md:hidden sticky top-0 z-30 flex h-[52px] items-center px-4 bg-[#090D0B]"
-        style={{ borderBottom: "1px solid rgba(255,255,255,0.08)" }}
+        className="md:hidden sticky top-0 z-30 flex h-[52px] items-center px-4 bg-[#090D0B] border-b border-[#1E3025]"
       >
         <Image
           src="/logo-mark.png"

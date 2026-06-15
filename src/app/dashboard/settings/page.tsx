@@ -134,7 +134,7 @@ export default function SettingsPage() {
             <div className="flex h-6 w-6 items-center justify-center rounded-md bg-[#3A8F5F]/15">
               <Settings className="h-3.5 w-3.5 text-[#4DB87B]" />
             </div>
-            <span className="text-xs font-bold tracking-[0.2em] text-[#4A6857] uppercase">
+            <span className="text-[11px] font-bold tracking-[0.2em] text-[#4A6857] uppercase">
               Contractor Info
             </span>
           </div>
@@ -159,7 +159,7 @@ export default function SettingsPage() {
             <form onSubmit={(e) => void handleSubmit(e)} className="p-5">
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
-                  <label className="mb-1.5 block text-[10px] font-bold tracking-[0.15em] text-[#4A6857] uppercase">
+                  <label className="mb-1.5 block text-[11px] font-bold tracking-[0.2em] text-[#4A6857] uppercase">
                     Company Name
                   </label>
                   <input
@@ -174,7 +174,7 @@ export default function SettingsPage() {
                   />
                 </div>
                 <div>
-                  <label className="mb-1.5 block text-[10px] font-bold tracking-[0.15em] text-[#4A6857] uppercase">
+                  <label className="mb-1.5 block text-[11px] font-bold tracking-[0.2em] text-[#4A6857] uppercase">
                     ECRA/ESA License Number
                   </label>
                   <input
@@ -192,7 +192,7 @@ export default function SettingsPage() {
                   />
                 </div>
                 <div>
-                  <label className="mb-1.5 block text-[10px] font-bold tracking-[0.15em] text-[#4A6857] uppercase">
+                  <label className="mb-1.5 block text-[11px] font-bold tracking-[0.2em] text-[#4A6857] uppercase">
                     Phone Number
                   </label>
                   <input
@@ -207,7 +207,7 @@ export default function SettingsPage() {
                   />
                 </div>
                 <div>
-                  <label className="mb-1.5 block text-[10px] font-bold tracking-[0.15em] text-[#4A6857] uppercase">
+                  <label className="mb-1.5 block text-[11px] font-bold tracking-[0.2em] text-[#4A6857] uppercase">
                     Email
                   </label>
                   <input

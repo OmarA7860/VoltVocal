@@ -75,7 +75,7 @@ export default function DashboardPage() {
         <EstimateRecorder />
 
         {/* How it works strip */}
-        <p className="text-center pb-4" style={{ fontSize: 11, letterSpacing: "0.2em", color: "rgba(255,255,255,0.25)", marginTop: 24 }}>
+        <p className="mt-6 pb-4 text-center text-[11px] tracking-[0.2em] text-[#4A6857]">
           Speak &nbsp;·&nbsp; AI Structures &nbsp;·&nbsp; Export
         </p>
       </main>

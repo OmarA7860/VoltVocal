@@ -31,7 +31,7 @@ const money = new Intl.NumberFormat("en-CA", {
 type FormState = { name: string; unit: string; unit_price: string; category: string };
 const EMPTY_FORM: FormState = { name: "", unit: "each", unit_price: "", category: "general" };
 
-const inputCls = "w-full rounded-xl border border-[#1E3025] bg-[#090D0B] px-3.5 py-2.5 min-h-[48px] text-sm text-[#E0EDE5] placeholder-[#2A4234] outline-none transition-all focus:border-[#3A8F5F] focus:ring-2 focus:ring-[#3A8F5F]/20";
+const inputCls = "w-full rounded-xl border border-[#1E3025] bg-[#090D0B] px-3.5 py-2.5 min-h-[48px] text-sm text-[#E0EDE5] placeholder-[#2A4234] outline-none transition-all focus:border-[#3A8F5F] focus:ring-1 focus:ring-[#3A8F5F]/30";
 const inlineInputCls = "rounded-lg border border-[#1E3025] bg-[#090D0B] px-2 py-1.5 text-sm text-[#E0EDE5] outline-none transition-colors focus:border-[#3A8F5F] focus:ring-1 focus:ring-[#3A8F5F]/30";
 
 export default function PricesPage() {
@@ -169,13 +169,13 @@ export default function PricesPage() {
             <div className="flex h-6 w-6 items-center justify-center rounded-md bg-[#3A8F5F]/15">
               <Plus className="h-3.5 w-3.5 text-[#4DB87B]" />
             </div>
-            <span className="text-xs font-bold tracking-[0.2em] text-[#4A6857] uppercase">Add New Item</span>
+            <span className="text-[11px] font-bold tracking-[0.2em] text-[#4A6857] uppercase">Add New Item</span>
           </div>
 
           <form onSubmit={(e) => void handleAdd(e)} className="p-5">
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-[1fr_120px_140px_160px] mb-3">
               <div>
-                <label className="mb-1.5 block text-[10px] font-bold tracking-[0.15em] text-[#4A6857] uppercase">Item Name</label>
+                <label className="mb-1.5 block text-[11px] font-bold tracking-[0.2em] text-[#4A6857] uppercase">Item Name</label>
                 <input
                   type="text"
                   placeholder="e.g. 20A Tamper-Resistant Receptacle"
@@ -187,7 +187,7 @@ export default function PricesPage() {
                 />
               </div>
               <div>
-                <label className="mb-1.5 block text-[10px] font-bold tracking-[0.15em] text-[#4A6857] uppercase">Unit</label>
+                <label className="mb-1.5 block text-[11px] font-bold tracking-[0.2em] text-[#4A6857] uppercase">Unit</label>
                 <input
                   type="text"
                   placeholder="each"
@@ -199,7 +199,7 @@ export default function PricesPage() {
                 />
               </div>
               <div>
-                <label className="mb-1.5 block text-[10px] font-bold tracking-[0.15em] text-[#4A6857] uppercase">Unit Price ($)</label>
+                <label className="mb-1.5 block text-[11px] font-bold tracking-[0.2em] text-[#4A6857] uppercase">Unit Price ($)</label>
                 <input
                   type="number"
                   inputMode="decimal"
@@ -212,7 +212,7 @@ export default function PricesPage() {
                 />
               </div>
               <div>
-                <label className="mb-1.5 block text-[10px] font-bold tracking-[0.15em] text-[#4A6857] uppercase">Category</label>
+                <label className="mb-1.5 block text-[11px] font-bold tracking-[0.2em] text-[#4A6857] uppercase">Category</label>
                 <select
                   value={form.category}
                   onChange={(e) => setForm((f) => ({ ...f, category: e.target.value }))}
@@ -242,7 +242,7 @@ export default function PricesPage() {
               <div className="flex h-6 w-6 items-center justify-center rounded-md bg-[#3A8F5F]/15">
                 <Tag className="h-3.5 w-3.5 text-[#4DB87B]" />
               </div>
-              <span className="text-xs font-bold tracking-[0.2em] text-[#4A6857] uppercase">Saved Items</span>
+              <span className="text-[11px] font-bold tracking-[0.2em] text-[#4A6857] uppercase">Saved Items</span>
             </div>
             {items.length > 0 && (
               <span className="rounded-full border border-[#1E3025] bg-[#131E17] px-2.5 py-0.5 text-[10px] font-bold text-[#3A8F5F] font-mono">
@@ -260,7 +260,7 @@ export default function PricesPage() {
             </div>
           ) : items.length === 0 ? (
             <div className="flex flex-col items-center gap-3 px-5 py-12 text-center">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#131E17] ring-1 ring-[#1E3025]">
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#131E17] border border-[#1E3025]">
                 <Tag className="h-6 w-6 text-[#2A4234]" />
               </div>
               <div>
