@@ -188,19 +188,17 @@ export function EstimateRecorder() {
           {phase === "idle" && (
             <div className="animate-fade-in flex flex-col items-center gap-6">
               <div className="relative flex items-center justify-center">
-                <span className="pulse-ring absolute h-32 w-32 rounded-full border border-[#3A8F5F]/25" />
-                <span className="pulse-ring absolute h-28 w-28 rounded-full border border-[#3A8F5F]/15" style={{ animationDelay: "0.5s" }} />
                 <button
                   type="button"
                   onClick={() => void startRecording()}
-                  className="relative flex h-24 w-24 items-center justify-center rounded-full bg-[#3A8F5F] shadow-[0_0_32px_rgba(58,143,95,0.35)] transition-all duration-300 hover:scale-105 hover:bg-[#2E7049] hover:shadow-[0_0_48px_rgba(58,143,95,0.5)] active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#4DB87B] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0E1612]"
+                  className="record-btn"
                   aria-label="Start recording"
                 >
                   <Image
                     src="/logo-mark.png"
                     alt="Record"
-                    width={56}
-                    height={56}
+                    width={64}
+                    height={64}
                     style={{ objectFit: "contain" }}
                     priority
                   />
@@ -218,6 +216,17 @@ export function EstimateRecorder() {
           {/* ── RECORDING ── */}
           {phase === "recording" && (
             <div className="animate-fade-in flex flex-col items-center gap-6">
+              {/* Pulsing logo button */}
+              <div className="record-btn record-btn-recording">
+                <Image
+                  src="/logo-mark.png"
+                  alt="Recording"
+                  width={64}
+                  height={64}
+                  style={{ objectFit: "contain" }}
+                />
+              </div>
+
               <div className="flex items-center justify-center gap-0.5 h-10 w-full max-w-xs">
                 {WAVE_HEIGHTS.map((h, i) => (
                   <div
