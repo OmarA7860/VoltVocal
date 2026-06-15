@@ -13,10 +13,9 @@ export default function DashboardPage() {
             <Image
               src="/logo-mark.png"
               alt="VoltVocal"
-              width={36}
-              height={36}
-              className="sm:h-11 sm:w-11"
-              style={{ objectFit: "contain" }}
+              width={40}
+              height={40}
+              style={{ objectFit: "contain", filter: "brightness(0) invert(1)" }}
             />
             <div>
               <div className="text-xs font-bold tracking-widest text-[#E0EDE5] uppercase sm:text-sm">
@@ -74,6 +73,24 @@ export default function DashboardPage() {
         </div>
 
         <EstimateRecorder />
+
+        {/* How it works strip */}
+        <div className="flex items-center justify-center gap-4 sm:gap-8 pb-4">
+          <div className="flex flex-col items-center gap-1.5 text-center">
+            <span className="text-xl">🎙</span>
+            <span className="text-[10px] font-semibold tracking-wider text-[#4A6857] uppercase">Speak naturally</span>
+          </div>
+          <div className="text-[#2A4234] text-sm font-mono">→</div>
+          <div className="flex flex-col items-center gap-1.5 text-center">
+            <span className="text-xl">⚡</span>
+            <span className="text-[10px] font-semibold tracking-wider text-[#4A6857] uppercase">AI structures it</span>
+          </div>
+          <div className="text-[#2A4234] text-sm font-mono">→</div>
+          <div className="flex flex-col items-center gap-1.5 text-center">
+            <span className="text-xl">📄</span>
+            <span className="text-[10px] font-semibold tracking-wider text-[#4A6857] uppercase">Export PDF</span>
+          </div>
+        </div>
       </main>
 
       <InstallPrompt />

@@ -156,7 +156,8 @@ export function EstimateRecorder() {
     <div className="flex w-full flex-col gap-6">
       {/* Main control card */}
       <div
-        className="w-full overflow-hidden rounded-2xl border border-[#1E3025] bg-[#0E1612] shadow-[0_8px_32px_rgba(0,0,0,0.4)]"
+        className="w-full overflow-hidden rounded-2xl shadow-[0_8px_32px_rgba(0,0,0,0.4)]"
+        style={{ background: "rgba(58,143,95,0.03)", border: "1px solid rgba(58,143,95,0.2)" }}
         aria-live="polite"
       >
         {/* Status bar */}
@@ -183,29 +184,27 @@ export function EstimateRecorder() {
           </span>
         </div>
 
-        <div className="px-6 py-8">
+        <div className="px-6 py-12">
           {/* ── IDLE ── */}
           {phase === "idle" && (
-            <div className="animate-fade-in flex flex-col items-center gap-6">
-              <div className="relative flex items-center justify-center">
-                <button
-                  type="button"
-                  onClick={() => void startRecording()}
-                  className="record-btn"
-                  aria-label="Start recording"
-                >
-                  <Image
-                    src="/logo-mark.png"
-                    alt="Record"
-                    width={64}
-                    height={64}
-                    style={{ objectFit: "contain" }}
-                    priority
-                  />
-                </button>
-              </div>
-              <div className="text-center">
-                <p className="text-sm font-semibold text-[#E0EDE5]">Tap to start recording</p>
+            <div className="animate-fade-in flex flex-col items-center">
+              <button
+                type="button"
+                onClick={() => void startRecording()}
+                className="record-btn"
+                aria-label="Start recording"
+              >
+                <Image
+                  src="/logo-mark.png"
+                  alt="Record"
+                  width={64}
+                  height={64}
+                  style={{ objectFit: "contain", filter: "brightness(0) invert(1)" }}
+                  priority
+                />
+              </button>
+              <div className="text-center mt-5">
+                <p className="text-lg font-semibold text-white">Tap to start recording</p>
                 <p className="mt-1 text-xs text-[#4A6857]">
                   Describe materials, quantities, and any notes aloud
                 </p>
@@ -223,7 +222,7 @@ export function EstimateRecorder() {
                   alt="Recording"
                   width={64}
                   height={64}
-                  style={{ objectFit: "contain" }}
+                  style={{ objectFit: "contain", filter: "brightness(0) invert(1)" }}
                 />
               </div>
 
