@@ -162,3 +162,23 @@ a {
       0 0 50px rgba(58, 143, 95, 0.5);
   }
 }
+
+@keyframes pageEnter {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes cardEnter {
+  from { opacity: 0; transform: translateY(16px) scale(0.98); }
+  to   { opacity: 1; transform: translateY(0)  scale(1); }
+}
+
+.page-enter {
+  animation: pageEnter 0.25s cubic-bezier(0.22, 1, 0.36, 1) both;
+  will-change: opacity, transform;
+}
+
+.card-enter {
+  animation: cardEnter 0.28s cubic-bezier(0.22, 1, 0.36, 1) both;
+  will-change: opacity, transform;
+}

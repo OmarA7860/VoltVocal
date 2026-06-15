@@ -5,7 +5,7 @@ import { InstallPrompt } from "@/components/install-prompt";
 
 export default function DashboardPage() {
   return (
-    <div className="flex min-h-full flex-1 flex-col bg-[#090D0B]">
+    <div className="page-enter flex min-h-full flex-1 flex-col bg-[#090D0B]">
       {/* Header */}
       <header className="hidden md:flex sticky top-0 z-30 border-b border-[#1E3025] bg-[#090D0B]/90 backdrop-blur-md">
         <div className="mx-auto flex max-w-5xl items-center gap-2 px-3 py-2.5 sm:gap-4 sm:px-6 sm:py-3">

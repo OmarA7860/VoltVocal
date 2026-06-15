@@ -30,12 +30,15 @@ export function BottomNav() {
           <Link
             key={href}
             href={href}
-            className={`flex flex-1 flex-col items-center justify-center gap-1 transition-colors ${
-              isActive ? "text-[#4DB87B]" : "text-[#4A6857]"
+            className={`relative flex flex-1 flex-col items-center justify-center gap-1 transition-all duration-200 ${
+              isActive ? "text-[#4DB87B]" : "text-[#4A6857] hover:text-[#8AA895]"
             }`}
           >
-            <Icon className="h-5 w-5" />
-            <span className="text-[10px] font-semibold tracking-wide uppercase">
+            {isActive && (
+              <span className="absolute top-0 inset-x-3 h-[2px] rounded-b-full bg-[#4DB87B] opacity-80" />
+            )}
+            <Icon className={`h-5 w-5 transition-transform duration-200 ${isActive ? "scale-110" : ""}`} />
+            <span className={`text-[10px] font-semibold tracking-wide uppercase transition-all duration-200 ${isActive ? "font-bold" : ""}`}>
               {label}
             </span>
           </Link>

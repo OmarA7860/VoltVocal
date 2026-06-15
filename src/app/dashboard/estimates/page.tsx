@@ -156,7 +156,7 @@ export default function EstimatesPage() {
     : estimates;
 
   return (
-    <div className="flex min-h-full flex-col bg-[#090D0B]">
+    <div className="page-enter flex min-h-full flex-col bg-[#090D0B]">
       {/* Desktop header — hidden on mobile */}
       <header className="hidden md:flex sticky top-0 z-30 border-b border-[#1E3025] bg-[#090D0B]/90 backdrop-blur-md">
         <div className="mx-auto flex w-full max-w-5xl items-center gap-4 px-4 py-3 sm:px-6">
@@ -304,7 +304,7 @@ export default function EstimatesPage() {
 
         {/* Estimates list */}
         {!loading &&
-          filtered.map((est) => {
+          filtered.map((est, i) => {
             const isExpanded = expandedId === est.id;
             const totalWithHST = Math.round(est.total * 1.13 * 100) / 100;
             const estimate: EstimateResult = {
@@ -314,7 +314,7 @@ export default function EstimatesPage() {
             };
 
             return (
-              <div key={est.id} className="border-b border-white/[0.06]">
+              <div key={est.id} className="card-enter border-b border-white/[0.06]" style={{ animationDelay: `${i * 0.055}s` }}>
                 {/* Card header row */}
                 <div className="px-4 py-4 bg-[#090D0B]">
                   <div className="flex items-start justify-between gap-3">
