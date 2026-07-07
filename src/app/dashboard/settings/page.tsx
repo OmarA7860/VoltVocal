@@ -79,6 +79,12 @@ export default function SettingsPage() {
               href="/dashboard"
               className="flex items-center gap-1.5 rounded-md px-3 py-1.5 text-[11px] font-semibold tracking-wider text-[#4A6857] uppercase transition-colors hover:bg-[#1E3025] hover:text-[#8AA895]"
             >
+              Home
+            </Link>
+            <Link
+              href="/dashboard/estimates"
+              className="flex items-center gap-1.5 rounded-md px-3 py-1.5 text-[11px] font-semibold tracking-wider text-[#4A6857] uppercase transition-colors hover:bg-[#1E3025] hover:text-[#8AA895]"
+            >
               Estimates
             </Link>
             <Link

@@ -274,7 +274,7 @@ export function EstimateRecorder() {
               </div>
               <div className="text-center">
                 <p className="text-sm font-bold text-[#E0EDE5]">Transcribing audio…</p>
-                <p className="mt-1 text-xs text-[#4A6857]">Groq Whisper is processing your recording</p>
+                <p className="mt-1 text-xs text-[#4A6857]">Converting your audio to text…</p>
               </div>
               <div className="flex items-center gap-1.5">
                 <span className="h-1.5 w-1.5 rounded-full bg-[#3A8F5F] animate-bounce" style={{ animationDelay: "0s" }} />
@@ -298,7 +298,7 @@ export function EstimateRecorder() {
               </div>
               <div className="text-center">
                 <p className="text-sm font-bold text-[#E0EDE5]">Building estimate…</p>
-                <p className="mt-1 text-xs text-[#4A6857]">Llama is generating line items and totals</p>
+                <p className="mt-1 text-xs text-[#4A6857]">Analyzing scope and building line items…</p>
               </div>
               <div className="flex items-center gap-1.5">
                 <span className="h-1.5 w-1.5 rounded-full bg-[#4DB87B] animate-bounce" style={{ animationDelay: "0s" }} />

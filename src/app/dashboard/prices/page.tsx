@@ -118,6 +118,12 @@ export default function PricesPage() {
               href="/dashboard"
               className="flex items-center gap-1.5 rounded-md px-3 py-1.5 text-[11px] font-semibold tracking-wider text-[#4A6857] uppercase transition-colors hover:bg-[#1E3025] hover:text-[#8AA895]"
             >
+              Home
+            </Link>
+            <Link
+              href="/dashboard/estimates"
+              className="flex items-center gap-1.5 rounded-md px-3 py-1.5 text-[11px] font-semibold tracking-wider text-[#4A6857] uppercase transition-colors hover:bg-[#1E3025] hover:text-[#8AA895]"
+            >
               Estimates
             </Link>
             <Link
@@ -150,8 +156,7 @@ export default function PricesPage() {
             Your Items &amp; <span className="text-[#4DB87B]">Rates</span>
           </h1>
           <p className="mt-2 text-center text-sm text-[#4A6857] max-w-md mx-auto">
-            Prices saved here are injected into every AI estimate. When a spoken item matches,
-            your exact price is used automatically.
+            Prices saved here are used in every estimate. When a spoken item matches, your exact rate is applied automatically.
           </p>
         </div>
 

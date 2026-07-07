@@ -13,7 +13,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           alt="VoltVocal"
           width={36}
           height={36}
-          style={{ objectFit: "contain" }}
+          style={{ objectFit: "contain", filter: "brightness(0) invert(1)" }}
         />
         <span className="flex-1 text-center text-[11px] font-bold tracking-[0.3em] text-[#E0EDE5] uppercase">
           VoltVocal

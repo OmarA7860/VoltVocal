@@ -73,8 +73,7 @@ export default function DashboardPage() {
             <span className="text-[#4DB87B]">Estimate.</span>
           </h1>
           <p className="mx-auto mt-2 hidden max-w-md text-center text-sm text-[#4A6857] sm:block">
-            Walk the job site and describe what you see. Groq Whisper transcribes
-            the audio, Llama builds structured line items instantly.
+            Describe the scope on-site and get a structured estimate in seconds.
           </p>
         </div>
 
@@ -82,7 +81,7 @@ export default function DashboardPage() {
 
         {/* How it works strip */}
         <p className="mt-6 pb-4 text-center text-[11px] tracking-[0.2em] text-[#4A6857]">
-          Speak &nbsp;·&nbsp; AI Structures &nbsp;·&nbsp; Export
+          Speak &nbsp;·&nbsp; Review &nbsp;·&nbsp; Export
         </p>
       </main>
 
