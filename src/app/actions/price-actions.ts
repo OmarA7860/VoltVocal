@@ -110,7 +110,10 @@ export async function savePriceItemAction(
       .select()
       .single();
 
-    if (error) throw new Error("DB_INSERT_FAILED");
+    if (error) {
+      console.error("[Supabase price insert] code:", error.code, "message:", error.message, "details:", error.details, "hint:", error.hint);
+      throw new Error("DB_INSERT_FAILED");
+    }
     return { ok: true, item: data };
   } catch (e) {
     return { ok: false, error: mapError(e) };
@@ -144,7 +147,10 @@ export async function updatePriceItemAction(
       .select()
       .single();
 
-    if (error) throw new Error("DB_UPDATE_FAILED");
+    if (error) {
+      console.error("[Supabase price update] code:", error.code, "message:", error.message, "details:", error.details, "hint:", error.hint);
+      throw new Error("DB_UPDATE_FAILED");
+    }
     return { ok: true, item: data };
   } catch (e) {
     return { ok: false, error: mapError(e) };
@@ -169,7 +175,10 @@ export async function deletePriceItemAction(
 
     const { error } = await supabase.from("price_list").delete().eq("id", id);
 
-    if (error) throw new Error("DB_DELETE_FAILED");
+    if (error) {
+      console.error("[Supabase price delete] code:", error.code, "message:", error.message, "details:", error.details, "hint:", error.hint);
+      throw new Error("DB_DELETE_FAILED");
+    }
     return { ok: true };
   } catch (e) {
     return { ok: false, error: mapError(e) };

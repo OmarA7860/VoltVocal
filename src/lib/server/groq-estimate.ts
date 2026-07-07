@@ -154,7 +154,12 @@ function normalizeEstimate(raw: unknown): EstimateResult {
     throw new Error("INVALID_MODEL_OUTPUT");
   }
   const o = raw as Record<string, unknown>;
-  const items = Array.isArray(o.lineItems) ? o.lineItems : [];
+  // Llama 3.3 sometimes returns snake_case "line_items" instead of camelCase "lineItems"
+  const items = Array.isArray(o.lineItems)
+    ? o.lineItems
+    : Array.isArray(o.line_items)
+    ? o.line_items
+    : [];
   const lineItems = items.map((row, i) => {
     const r = row as Record<string, unknown>;
     const qty = Number(r.quantity);
@@ -263,6 +268,7 @@ export async function estimateWithGroq(
   };
   const text = data.choices?.[0]?.message?.content;
   if (!text?.trim()) {
+    console.error("[Groq estimate] model returned empty content");
     throw new Error("ESTIMATE_EMPTY");
   }
 
@@ -270,9 +276,16 @@ export async function estimateWithGroq(
   try {
     parsed = extractJsonObject(text);
   } catch {
+    console.error("[Groq estimate] JSON parse failed. Raw model output:", text.slice(0, 500));
     throw new Error("ESTIMATE_INVALID_JSON");
   }
 
   const normalized = normalizeEstimate(parsed);
+
+  if (normalized.lineItems.length === 0) {
+    console.error("[Groq estimate] model returned 0 line items. Raw model output:", text.slice(0, 500));
+    throw new Error("ESTIMATE_EMPTY");
+  }
+
   return sanitizeEstimateResult(normalized);
 }

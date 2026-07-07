@@ -50,8 +50,9 @@ function mapError(e: unknown): string {
     case "ESTIMATE_UPSTREAM":
       return "The AI service is temporarily unavailable. Try again shortly.";
     case "TRANSCRIPTION_EMPTY":
+      return "No speech detected. Try a clearer recording.";
     case "ESTIMATE_EMPTY":
-      return "No result was returned. Try a clearer recording.";
+      return "No line items were returned. Try speaking more detail — name the materials, quantities, and any prices.";
     case "ESTIMATE_INVALID_JSON":
       return "Could not parse the estimate. Try recording again with more detail.";
     case "INVALID_MODEL_OUTPUT":
