@@ -189,7 +189,10 @@ export async function saveEstimateAction(
       .select("id")
       .single();
 
-    if (error) throw new Error("DB_INSERT_FAILED");
+    if (error) {
+      console.error("[Supabase estimate insert] code:", error.code, "message:", error.message, "details:", error.details, "hint:", error.hint);
+      throw new Error("DB_INSERT_FAILED");
+    }
     return { ok: true, id: data.id };
   } catch (e) {
     return { ok: false, error: mapError(e) };
