@@ -144,9 +144,18 @@ function groqKey(): string {
 
 function extractJsonObject(text: string): unknown {
   const trimmed = text.trim();
-  const fence = trimmed.match(/^```(?:json)?\s*([\s\S]*?)```$/m);
-  const raw = fence ? fence[1].trim() : trimmed;
-  return JSON.parse(raw);
+  // Try markdown code fence (anywhere in the response)
+  const fence = trimmed.match(/```(?:json)?\s*([\s\S]*?)```/);
+  if (fence) return JSON.parse(fence[1].trim());
+  // Try parsing the whole response directly
+  try {
+    return JSON.parse(trimmed);
+  } catch {
+    // Fall back to finding the first {...} block in the response
+    const match = trimmed.match(/\{[\s\S]*\}/);
+    if (match) return JSON.parse(match[0]);
+    throw new Error("No JSON found");
+  }
 }
 
 function normalizeEstimate(raw: unknown): EstimateResult {
