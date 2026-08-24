@@ -10,7 +10,7 @@ import {
 } from "@/lib/sanitize-ai-text";
 
 const WHISPER_MODEL = "whisper-large-v3-turbo";
-const DEFAULT_CHAT_MODEL = "llama-3.3-70b-versatile";
+const DEFAULT_CHAT_MODEL = "llama3-70b-8192";
 
 const ESTIMATOR_SYSTEM = `You are a transcription structuring tool for electrical contractors. Your only job is to convert a voice note into a clean structured estimate using ONLY what was explicitly stated. You do not add knowledge, guess prices, invent line items, or provide advice.
 
