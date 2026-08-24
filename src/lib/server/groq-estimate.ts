@@ -134,6 +134,10 @@ Example output:
   "notes": ""
 }`;
 
+async function sleep(ms: number) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
 function groqKey(): string {
   const key = process.env.GROQ_API_KEY;
   if (!key) {
@@ -214,30 +218,47 @@ export async function transcribeWithGroq(file: File): Promise<string> {
   body.append("model", WHISPER_MODEL);
   body.append("response_format", "json");
 
-  const res = await fetch("https://api.groq.com/openai/v1/audio/transcriptions", {
-    method: "POST",
-    headers: { Authorization: `Bearer ${key}` },
-    body,
-  });
+  let lastError: Error | null = null;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    if (attempt > 0) {
+      console.log("[Groq transcribe] Retrying after 2s (attempt", attempt + 1, "of 3)");
+      await sleep(2000);
+    }
 
-  console.log("[Groq transcribe] Response status:", res.status, res.statusText);
+    const res = await fetch("https://api.groq.com/openai/v1/audio/transcriptions", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${key}` },
+      body,
+    });
 
-  if (!res.ok) {
-    const errBody = await res.clone().text();
-    console.error("[Groq transcribe] Upstream error:", res.status, errBody);
-    throw new Error("TRANSCRIPTION_UPSTREAM");
+    console.log("[Groq transcribe] Response status:", res.status, res.statusText, "attempt:", attempt + 1);
+
+    if (res.status === 429 || res.status === 503) {
+      const errBody = await res.clone().text();
+      console.error("[Groq transcribe] Retryable error:", res.status, errBody);
+      lastError = new Error("TRANSCRIPTION_UPSTREAM");
+      continue;
+    }
+
+    if (!res.ok) {
+      const errBody = await res.clone().text();
+      console.error("[Groq transcribe] Upstream error:", res.status, errBody);
+      throw new Error("TRANSCRIPTION_UPSTREAM");
+    }
+
+    const data = (await res.json()) as { text?: string };
+    console.log("[Groq transcribe] Transcript length:", data.text?.length ?? 0);
+
+    if (!data.text?.trim()) {
+      console.error("[Groq transcribe] Empty transcript returned");
+      throw new Error("TRANSCRIPTION_EMPTY");
+    }
+
+    const cleaned = sanitizePlainText(data.text, { preserveNewlines: true });
+    return truncateField(cleaned, LIMITS.transcript);
   }
 
-  const data = (await res.json()) as { text?: string };
-  console.log("[Groq transcribe] Transcript length:", data.text?.length ?? 0);
-
-  if (!data.text?.trim()) {
-    console.error("[Groq transcribe] Empty transcript returned");
-    throw new Error("TRANSCRIPTION_EMPTY");
-  }
-
-  const cleaned = sanitizePlainText(data.text, { preserveNewlines: true });
-  return truncateField(cleaned, LIMITS.transcript);
+  throw lastError ?? new Error("TRANSCRIPTION_UPSTREAM");
 }
 
 export async function estimateWithGroq(
@@ -258,62 +279,79 @@ export async function estimateWithGroq(
           .join("\n")}\nIf an item mentioned matches something in this list, use that exact price. Do not guess.`
       : ESTIMATOR_SYSTEM;
 
-  const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${key}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      model,
-      messages: [
-        { role: "system", content: systemContent },
-        { role: "user", content: userContent },
-      ],
-      temperature: 0.2,
-      max_tokens: 4096,
-    }),
-  });
+  let lastError: Error | null = null;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    if (attempt > 0) {
+      console.log("[Groq estimate] Retrying after 2s (attempt", attempt + 1, "of 3)");
+      await sleep(2000);
+    }
 
-  console.log("[Groq estimate] Response status:", res.status, res.statusText);
+    const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${key}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model,
+        messages: [
+          { role: "system", content: systemContent },
+          { role: "user", content: userContent },
+        ],
+        temperature: 0.2,
+        max_tokens: 4096,
+      }),
+    });
 
-  if (!res.ok) {
-    const errBody = await res.clone().text();
-    console.error("[Groq estimate] Upstream error:", res.status, errBody);
-    throw new Error("ESTIMATE_UPSTREAM");
+    console.log("[Groq estimate] Response status:", res.status, res.statusText, "attempt:", attempt + 1);
+
+    if (res.status === 429 || res.status === 503) {
+      const errBody = await res.clone().text();
+      console.error("[Groq estimate] Retryable error:", res.status, errBody);
+      lastError = new Error("ESTIMATE_UPSTREAM");
+      continue;
+    }
+
+    if (!res.ok) {
+      const errBody = await res.clone().text();
+      console.error("[Groq estimate] Upstream error:", res.status, errBody);
+      throw new Error("ESTIMATE_UPSTREAM");
+    }
+
+    const data = (await res.json()) as {
+      choices?: Array<{ message?: { content?: string } }>;
+      usage?: { prompt_tokens?: number; completion_tokens?: number };
+    };
+
+    console.log("[Groq estimate] Usage:", JSON.stringify(data.usage ?? {}));
+
+    const text = data.choices?.[0]?.message?.content;
+    if (!text?.trim()) {
+      console.error("[Groq estimate] Model returned empty content. Full response:", JSON.stringify(data).slice(0, 500));
+      throw new Error("ESTIMATE_EMPTY");
+    }
+
+    console.log("[Groq estimate] Raw model output (first 300 chars):", text.slice(0, 300));
+
+    let parsed: unknown;
+    try {
+      parsed = extractJsonObject(text);
+    } catch {
+      console.error("[Groq estimate] JSON parse failed. Raw model output:", text.slice(0, 500));
+      throw new Error("ESTIMATE_INVALID_JSON");
+    }
+
+    const normalized = normalizeEstimate(parsed);
+
+    if (normalized.lineItems.length === 0) {
+      console.error("[Groq estimate] Model returned 0 line items. Raw model output:", text.slice(0, 500));
+      throw new Error("ESTIMATE_EMPTY");
+    }
+
+    console.log("[Groq estimate] Success. Line items:", normalized.lineItems.length, "total:", normalized.total);
+
+    return sanitizeEstimateResult(normalized);
   }
 
-  const data = (await res.json()) as {
-    choices?: Array<{ message?: { content?: string } }>;
-    usage?: { prompt_tokens?: number; completion_tokens?: number };
-  };
-
-  console.log("[Groq estimate] Usage:", JSON.stringify(data.usage ?? {}));
-
-  const text = data.choices?.[0]?.message?.content;
-  if (!text?.trim()) {
-    console.error("[Groq estimate] Model returned empty content. Full response:", JSON.stringify(data).slice(0, 500));
-    throw new Error("ESTIMATE_EMPTY");
-  }
-
-  console.log("[Groq estimate] Raw model output (first 300 chars):", text.slice(0, 300));
-
-  let parsed: unknown;
-  try {
-    parsed = extractJsonObject(text);
-  } catch {
-    console.error("[Groq estimate] JSON parse failed. Raw model output:", text.slice(0, 500));
-    throw new Error("ESTIMATE_INVALID_JSON");
-  }
-
-  const normalized = normalizeEstimate(parsed);
-
-  if (normalized.lineItems.length === 0) {
-    console.error("[Groq estimate] Model returned 0 line items. Raw model output:", text.slice(0, 500));
-    throw new Error("ESTIMATE_EMPTY");
-  }
-
-  console.log("[Groq estimate] Success. Line items:", normalized.lineItems.length, "total:", normalized.total);
-
-  return sanitizeEstimateResult(normalized);
+  throw lastError ?? new Error("ESTIMATE_UPSTREAM");
 }
