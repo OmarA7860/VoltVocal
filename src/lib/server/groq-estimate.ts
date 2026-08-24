@@ -137,8 +137,10 @@ Example output:
 function groqKey(): string {
   const key = process.env.GROQ_API_KEY;
   if (!key) {
+    console.error("[Groq] GROQ_API_KEY is not set");
     throw new Error("CONFIG_MISSING");
   }
+  console.log("[Groq] API key present, prefix:", key.slice(0, 10) + "...");
   return key;
 }
 
@@ -205,6 +207,8 @@ function normalizeEstimate(raw: unknown): EstimateResult {
 export async function transcribeWithGroq(file: File): Promise<string> {
   const key = groqKey();
 
+  console.log("[Groq transcribe] Starting. file name:", file.name, "size:", file.size, "type:", file.type, "model:", WHISPER_MODEL);
+
   const body = new FormData();
   body.append("file", file, file.name || "recording.webm");
   body.append("model", WHISPER_MODEL);
@@ -216,15 +220,19 @@ export async function transcribeWithGroq(file: File): Promise<string> {
     body,
   });
 
+  console.log("[Groq transcribe] Response status:", res.status, res.statusText);
+
   if (!res.ok) {
-    if (process.env.NODE_ENV === "development") {
-      console.error("[Groq transcribe]", res.status, await res.clone().text());
-    }
+    const errBody = await res.clone().text();
+    console.error("[Groq transcribe] Upstream error:", res.status, errBody);
     throw new Error("TRANSCRIPTION_UPSTREAM");
   }
 
   const data = (await res.json()) as { text?: string };
+  console.log("[Groq transcribe] Transcript length:", data.text?.length ?? 0);
+
   if (!data.text?.trim()) {
+    console.error("[Groq transcribe] Empty transcript returned");
     throw new Error("TRANSCRIPTION_EMPTY");
   }
 
@@ -238,6 +246,8 @@ export async function estimateWithGroq(
 ): Promise<EstimateResult> {
   const key = groqKey();
   const model = process.env.GROQ_MODEL ?? DEFAULT_CHAT_MODEL;
+
+  console.log("[Groq estimate] Starting. model:", model, "transcript length:", transcript.length, "price list items:", priceList.length);
 
   const userContent = `Transcript from job-site voice note:\n"""${transcript}"""`;
 
@@ -265,21 +275,28 @@ export async function estimateWithGroq(
     }),
   });
 
+  console.log("[Groq estimate] Response status:", res.status, res.statusText);
+
   if (!res.ok) {
-    if (process.env.NODE_ENV === "development") {
-      console.error("[Groq chat]", res.status, await res.clone().text());
-    }
+    const errBody = await res.clone().text();
+    console.error("[Groq estimate] Upstream error:", res.status, errBody);
     throw new Error("ESTIMATE_UPSTREAM");
   }
 
   const data = (await res.json()) as {
     choices?: Array<{ message?: { content?: string } }>;
+    usage?: { prompt_tokens?: number; completion_tokens?: number };
   };
+
+  console.log("[Groq estimate] Usage:", JSON.stringify(data.usage ?? {}));
+
   const text = data.choices?.[0]?.message?.content;
   if (!text?.trim()) {
-    console.error("[Groq estimate] model returned empty content");
+    console.error("[Groq estimate] Model returned empty content. Full response:", JSON.stringify(data).slice(0, 500));
     throw new Error("ESTIMATE_EMPTY");
   }
+
+  console.log("[Groq estimate] Raw model output (first 300 chars):", text.slice(0, 300));
 
   let parsed: unknown;
   try {
@@ -292,9 +309,11 @@ export async function estimateWithGroq(
   const normalized = normalizeEstimate(parsed);
 
   if (normalized.lineItems.length === 0) {
-    console.error("[Groq estimate] model returned 0 line items. Raw model output:", text.slice(0, 500));
+    console.error("[Groq estimate] Model returned 0 line items. Raw model output:", text.slice(0, 500));
     throw new Error("ESTIMATE_EMPTY");
   }
+
+  console.log("[Groq estimate] Success. Line items:", normalized.lineItems.length, "total:", normalized.total);
 
   return sanitizeEstimateResult(normalized);
 }
